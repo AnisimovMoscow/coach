@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 
+use app\models\Student;
 use Exception;
 use TelegramBot\Api\BotApi;
 use TelegramBot\Api\Types\Inline\InlineKeyboardMarkup;
@@ -12,6 +13,9 @@ use yii\web\Controller;
 class SiteController extends Controller
 {
     const COMMAND_START = '/start';
+
+    const TYPE_COACH = 'coach';
+    const TYPE_STUDENT = 'student';
 
     public function behaviors()
     {
@@ -54,37 +58,59 @@ class SiteController extends Controller
         $update = Yii::$app->request->post();
         Yii::info(print_r($update, true), 'send');
 
-        if (!array_key_exists('message', $update)) {
-            return;
-        }
-        $message = $update['message'];
-        $chat = $message['chat'];
+        if (array_key_exists('message', $update)) {
+            $message = $update['message'];
+            $chat = $message['chat'];
 
-        if ($chat['type'] === 'private' && array_key_exists('text', $message) && $message['text'] === self::COMMAND_START) {
-            $this->start($chat['id']);
+            if ($chat['type'] === 'private' && array_key_exists('text', $message) && $message['text'] === self::COMMAND_START) {
+                $this->start($chat['id']);
+            }
+        } elseif (array_key_exists('callback_query', $update)) {
+            if ($update['callback_query']['data'] === self::TYPE_STUDENT) {
+                $this->createStudent($update['callback_query']['from']);
+
+            } elseif ($update['callback_query']['data'] === self::TYPE_COACH) {
+                $this->createCoach($update['callback_query']['from']);
+            }
         }
     }
 
     private function start($id)
     {
-        $token = Yii::$app->params['token'];
-        $bot = new BotApi($token);
-
         $keyboard = new InlineKeyboardMarkup([
             [
                 [
                     'text' => 'Спортсмен',
-                    'callback_data' => 'student',
+                    'callback_data' => self::TYPE_STUDENT,
                 ],
                 [
                     'text' => 'Тренер',
-                    'callback_data' => 'coach',
+                    'callback_data' => self::TYPE_COACH,
                 ],
             ],
         ]);
+        $this->send($id, 'Подберу вам тренера для занятий или найду спорстмена для тренировки. Ты тренер или спортсмен?', $keyboard);
+    }
+
+    private function createStudent($user)
+    {
+        $student = Student::findOne(['telegram_id' => $user['id']]);
+        if ($student !== null) {
+            return;
+        }
+
+        Student::add($user);
+
+        $this->send($user['id'], 'Отправьте ваше имя. Оно будет отображаться тренеру');
+    }
+
+    private function send($chatId, $text, $keyboard = null)
+    {
+        $token = Yii::$app->params['token'];
+        $bot = new BotApi($token);
 
         try {
-            $bot->sendMessage($id, 'Подберу вам тренера для занятий или найду спорстмена для тренировки. Ты тренер или спортсмен?', null, false, null, $keyboard);
+            $bot->sendMessage($chatId, $text, null, false, null, $keyboard);
         } catch (Exception $e) {
             Yii::error('Send error. Message: ' . $e->getMessage() . ' Code: ' . $e->getCode(), 'send');
         }
