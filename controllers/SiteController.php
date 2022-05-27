@@ -6,6 +6,7 @@ use Exception;
 use TelegramBot\Api\BotApi;
 use TelegramBot\Api\Types\Inline\InlineKeyboardMarkup;
 use Yii;
+use yii\filters\VerbFilter;
 use yii\web\Controller;
 
 class SiteController extends Controller
