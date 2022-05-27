@@ -12,6 +12,9 @@ return [
     'components' => [
         'request' => [
             'cookieValidationKey' => 'xE5OMU3dUS2GFdaXhs7ixNXBAnQeTUw5',
+            'parsers' => [
+                'application/json' => 'yii\web\JsonParser',
+            ],
         ],
         'urlManager' => [
             'enablePrettyUrl' => true,
