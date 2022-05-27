@@ -10,6 +10,9 @@ return [
         '@bower' => '@vendor/bower-asset',
     ],
     'components' => [
+        'request' => [
+            'cookieValidationKey' => 'xE5OMU3dUS2GFdaXhs7ixNXBAnQeTUw5',
+        ],
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
