@@ -1,7 +1,8 @@
 {
     "require": {
         "yiisoft/yii2": "^2.0",
-        "yiisoft/yii2-bootstrap5": "^2.0"
+        "yiisoft/yii2-bootstrap5": "^2.0",
+        "telegram-bot/api": "^2.3"
     },
     "repositories": [
         {
