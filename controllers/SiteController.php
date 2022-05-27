@@ -166,7 +166,7 @@ class SiteController extends Controller
             }
             $buttons[] = $row;
         }
-        $keyboard = new InlineKeyboardMarkup([$buttons]);
+        $keyboard = new InlineKeyboardMarkup($buttons);
         $this->send($student->telegram_id, 'Выберите вид спорта для тренировок', $keyboard);
 
         $student->name = trim($text);
