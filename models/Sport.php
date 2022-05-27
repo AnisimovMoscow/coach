@@ -23,7 +23,7 @@ class Sport extends ActiveRecord
 
     public static function getAll()
     {
-        $seasons = self::find()->orderBy('started_at DESC')->all();
+        $seasons = self::find()->orderBy('name')->all();
         return array_column($seasons, 'name', 'id');
     }
 }
