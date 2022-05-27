@@ -28,15 +28,17 @@ return [
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,
-            'targets' => YII_DEBUG ? [
+            'targets' => [
                 [
                     'class' => 'yii\log\FileTarget',
-                    'levels' => ['error', 'warning', 'info'],
+                    'levels' => ['error', 'warning'],
                 ],
-            ] : [
                 [
                     'class' => 'yii\log\FileTarget',
-                    'levels' => ['error'],
+                    'levels' => ['info', 'error'],
+                    'categories' => ['send'],
+                    'logFile' => '@runtime/logs/send.log',
+                    'logVars' => [],
                 ],
             ],
         ],
