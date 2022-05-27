@@ -25,5 +25,12 @@ use yii\helpers\Url;
                 return Html::a($coach->name, ['coaches/update', 'id' => $coach->id]);
             },
         ],
+        [
+            'attribute' => 'telegram_name',
+            'format' => 'raw',
+            'value' => function ($coach) {
+                return Html::a($coach->telegram_name, ['coaches/update', 'id' => $coach->id]);
+            },
+        ],
     ],
 ])?>

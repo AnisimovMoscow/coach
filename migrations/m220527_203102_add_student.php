@@ -13,6 +13,7 @@ class m220527_203102_add_student extends Migration
             'telegram_id' => $this->string(),
             'telegram_name' => $this->string(),
             'telegram_username' => $this->string(),
+            'response_state' => $this->integer(),
         ]);
         $this->createIndex('telegram', 'student', 'telegram_id');
     }

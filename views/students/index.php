@@ -25,5 +25,12 @@ use yii\helpers\Url;
                 return Html::a($student->name, ['students/update', 'id' => $student->id]);
             },
         ],
+        [
+            'attribute' => 'telegram_name',
+            'format' => 'raw',
+            'value' => function ($student) {
+                return Html::a($student->telegram_name, ['students/update', 'id' => $student->id]);
+            },
+        ],
     ],
 ])?>

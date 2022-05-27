@@ -36,6 +36,27 @@ use yii\widgets\ActiveForm;
     </div>
 
     <div class="row mb-3">
+        <?=Html::activeLabel($coach, 'telegram_id', ['class' => 'col-sm-3 col-form-label'])?>
+        <div class="col-sm-9">
+            <?=Html::activeInput('text', $coach, 'telegram_id', ['class' => 'form-control'])?>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <?=Html::activeLabel($coach, 'telegram_name', ['class' => 'col-sm-3 col-form-label'])?>
+        <div class="col-sm-9">
+            <?=Html::activeInput('text', $coach, 'telegram_name', ['class' => 'form-control'])?>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <?=Html::activeLabel($coach, 'telegram_username', ['class' => 'col-sm-3 col-form-label'])?>
+        <div class="col-sm-9">
+            <?=Html::activeInput('text', $coach, 'telegram_username', ['class' => 'form-control'])?>
+        </div>
+    </div>
+
+    <div class="row mb-3">
         <div class="col-sm-6 offset-sm-3">
             <?=Html::submitButton(($coach->isNewRecord) ? 'Добавить' : 'Сохранить', ['class' => 'btn btn-primary'])?>
             <a href="<?=Url::to(['index'])?>" class="btn btn-outline-primary">Отмена</a>
