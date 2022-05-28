@@ -428,8 +428,13 @@ class SiteController extends Controller
         $coach->save();
     }
 
-    private function requestCoachSport($coach)
+    private function requestCoachSport($user)
     {
+        $coach = Coach::findOne(['telegram_id' => $user['id']]);
+        if ($coach === null) {
+            return;
+        }
+        
         $keyboard = $this->getSportKeyboard(self::TYPE_COACH);
         $this->send($coach->telegram_id, 'Выберите вид спорта, которым вы занимаетесь', $keyboard);
 
