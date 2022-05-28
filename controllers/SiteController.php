@@ -94,7 +94,7 @@ class SiteController extends Controller
                 case self::ACTION_TYPE:
                     if ($data['type'] == self::TYPE_STUDENT) {
                         $this->createStudent($user);
-                    } elseif ($data['type'] === self::TYPE_COACH) {
+                    } elseif ($data['type'] == self::TYPE_COACH) {
                         $this->createCoach($user);
                     }
                     break;
@@ -102,7 +102,7 @@ class SiteController extends Controller
                 case self::ACTION_SPORT:
                     if ($data['type'] == self::TYPE_STUDENT) {
                         $this->setStudentSport($user, $data['sport']);
-                    } elseif ($data['type'] === self::TYPE_COACH) {
+                    } elseif ($data['type'] == self::TYPE_COACH) {
                         $this->setCoachSport($user, $data['sport']);
                     }
                     break;
