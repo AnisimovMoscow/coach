@@ -139,7 +139,7 @@ class SiteController extends Controller
                         $this->requestStudentContact($user);
 
                     } elseif ($data['type'] == self::TYPE_COACH) {
-                        $this->setCoachSex($user, $data['age']);
+                        $this->setCoachSex($user, $data['sex']);
                         $this->requestCoachContact($user);
                     }
                     break;
