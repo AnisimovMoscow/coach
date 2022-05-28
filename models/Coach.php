@@ -14,6 +14,7 @@ class Coach extends ActiveRecord
     const RESPONSE_FORMAT = 5;
     const RESPONSE_CITY = 6;
     const RESPONSE_SPORT = 7;
+    const RESPONSE_ABOUT = 8;
 
     const FORMAT_ONLINE = 1;
     const FORMAT_OFFLINE = 2;
@@ -54,6 +55,7 @@ class Coach extends ActiveRecord
             'format' => 'Формат тренировок',
             'city_id' => 'Город',
             'sport_id' => 'Вид спорта',
+            'about' => 'О себе',
             'telegram_id' => 'ID в Telegram',
             'telegram_name' => 'Имя в Telegram',
             'telegram_username' => 'Ник в Telegram',
@@ -64,7 +66,7 @@ class Coach extends ActiveRecord
     public function rules()
     {
         return [
-            [['name', 'age', 'sex', 'contact', 'format', 'city_id', 'sport_id', 'telegram_id', 'telegram_name', 'telegram_username'], 'safe'],
+            [['name', 'age', 'sex', 'contact', 'format', 'city_id', 'sport_id', 'about', 'telegram_id', 'telegram_name', 'telegram_username'], 'safe'],
         ];
     }
 

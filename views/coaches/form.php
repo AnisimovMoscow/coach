@@ -73,6 +73,13 @@ use yii\widgets\ActiveForm;
     </div>
 
     <div class="row mb-3">
+        <?=Html::activeLabel($coach, 'about', ['class' => 'col-sm-3 col-form-label'])?>
+        <div class="col-sm-9">
+            <?=Html::activeTextarea($coach, 'about', ['class' => 'form-control', 'rows' => 3])?>
+        </div>
+    </div>
+
+    <div class="row mb-3">
         <?=Html::activeLabel($coach, 'telegram_id', ['class' => 'col-sm-3 col-form-label'])?>
         <div class="col-sm-9">
             <?=Html::activeInput('text', $coach, 'telegram_id', ['class' => 'form-control'])?>

@@ -15,6 +15,7 @@ class m220527_171749_add_coach extends Migration
             'format' => $this->integer(),
             'city_id' => $this->integer(),
             'sport_id' => $this->integer(),
+            'about' => $this->string(),
             'telegram_id' => $this->string(),
             'telegram_name' => $this->string(),
             'telegram_username' => $this->string(),

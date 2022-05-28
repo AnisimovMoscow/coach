@@ -26,6 +26,7 @@ class SiteController extends Controller
     const ACTION_FORMAT = 4;
     const ACTION_CITY = 5;
     const ACTION_SPORT = 6;
+    const ACTION_ABOUT = 7;
 
     public function behaviors()
     {
@@ -105,6 +106,10 @@ class SiteController extends Controller
                             case Coach::RESPONSE_CONTACT:
                                 $this->setCoachContact($coach, $message['text']);
                                 $this->requestCoachFormat($chat);
+
+                            case Coach::RESPONSE_ABOUT:
+                                $this->setCoachAbout($coach, $message['text']);
+                                $this->welcomeCoach($chat);
                         }
                     }
                 }
@@ -176,7 +181,7 @@ class SiteController extends Controller
 
                     } elseif ($data['type'] == self::TYPE_COACH) {
                         $this->setCoachSport($user, $data['sport']);
-                        $this->welcomeCoach($user);
+                        $this->requestCoachAbout($user);
                     }
                     break;
             }
@@ -602,6 +607,26 @@ class SiteController extends Controller
 
         $coach->sport_id = $sportId;
         $coach->response_state = Student::RESPONSE_NONE;
+        $coach->save();
+    }
+
+    private function requestCoachAbout($user)
+    {
+        $coach = Coach::findOne(['telegram_id' => $user['id']]);
+        if ($coach === null) {
+            return;
+        }
+
+        $this->send($user['id'], 'Расскажите немного о себе. Ваша квалификация, опыт');
+
+        $coach->response_state = Coach::RESPONSE_ABOUT;
+        $coach->save();
+    }
+
+    private function setCoachAbout($coach, $text)
+    {
+        $coach->about = trim($text);
+        $coach->response_state = Coach::RESPONSE_NONE;
         $coach->save();
     }
 
