@@ -3,6 +3,7 @@
 /* @var $this yii\web\View */
 /* @var $coach app\models\Coach */
 
+use app\models\Coach;
 use app\models\Sport;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -25,6 +26,27 @@ use yii\widgets\ActiveForm;
         <?=Html::activeLabel($coach, 'name', ['class' => 'col-sm-3 col-form-label'])?>
         <div class="col-sm-9">
             <?=Html::activeInput('text', $coach, 'name', ['class' => 'form-control'])?>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <?=Html::activeLabel($coach, 'age', ['class' => 'col-sm-3 col-form-label'])?>
+        <div class="col-sm-9">
+            <?=Html::activeDropDownList($coach, 'age', Coach::AGES, ['class' => 'form-select', 'prompt' => '—'])?>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <?=Html::activeLabel($coach, 'sex', ['class' => 'col-sm-3 col-form-label'])?>
+        <div class="col-sm-9">
+            <?=Html::activeDropDownList($coach, 'sex', Coach::SEXES, ['class' => 'form-select', 'prompt' => '—'])?>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <?=Html::activeLabel($coach, 'contact', ['class' => 'col-sm-3 col-form-label'])?>
+        <div class="col-sm-9">
+            <?=Html::activeTextarea($coach, 'contact', ['class' => 'form-control', 'rows' => 3])?>
         </div>
     </div>
 

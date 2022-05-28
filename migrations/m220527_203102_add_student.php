@@ -9,6 +9,9 @@ class m220527_203102_add_student extends Migration
         $this->createTable('student', [
             'id' => $this->primaryKey(),
             'name' => $this->string(),
+            'age' => $this->integer(),
+            'sex' => $this->integer(),
+            'contact' => $this->string(),
             'sport_id' => $this->integer(),
             'telegram_id' => $this->string(),
             'telegram_name' => $this->string(),

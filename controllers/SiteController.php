@@ -20,7 +20,9 @@ class SiteController extends Controller
     const TYPE_COACH = 2;
 
     const ACTION_TYPE = 1;
-    const ACTION_SPORT = 2;
+    const ACTION_AGE = 2;
+    const ACTION_SEX = 3;
+    const ACTION_SPORT = 4;
 
     public function behaviors()
     {
@@ -77,15 +79,31 @@ class SiteController extends Controller
                 $this->start($chat['id']);
             } else {
                 $student = Student::findOne(['telegram_id' => $chat['id']]);
-                if ($student !== null && $student->response_state == Student::RESPONSE_NAME) {
-                    $this->setStudentName($student, $message['text']);
-                    $this->requestStudentSport($student);
-                }
+                if ($student !== null) {
+                    switch ($student->response_state) {
+                        case Student::RESPONSE_NAME:
+                            $this->setStudentName($student, $message['text']);
+                            $this->requestStudentAge($chat);
+                            break;
 
-                $coach = Coach::findOne(['telegram_id' => $chat['id']]);
-                if ($coach !== null && $coach->response_state == Coach::RESPONSE_NAME) {
-                    $this->setCoachName($coach, $message['text']);
-                    $this->requestCoachSport($coach);
+                        case Student::RESPONSE_CONTACT:
+                            $this->setStudentContact($student, $message['text']);
+                            $this->requestStudentSport($chat);
+                    }
+                } else {
+                    $coach = Coach::findOne(['telegram_id' => $chat['id']]);
+                    if ($coach !== null) {
+                        switch ($coach->response_state) {
+                            case Coach::RESPONSE_NAME:
+                                $this->setCoachName($coach, $message['text']);
+                                $this->requestCoachAge($chat);
+                                break;
+
+                            case Coach::RESPONSE_CONTACT:
+                                $this->setCoachContact($coach, $message['text']);
+                                $this->requestCoachSport($chat);
+                        }
+                    }
                 }
             }
         } elseif (array_key_exists('callback_query', $update)) {
@@ -101,6 +119,28 @@ class SiteController extends Controller
                     } elseif ($data['type'] == self::TYPE_COACH) {
                         $coach = $this->createCoach($user);
                         $this->requestCoachName($user, $coach);
+                    }
+                    break;
+
+                case self::ACTION_AGE:
+                    if ($data['type'] == self::TYPE_STUDENT) {
+                        $this->setStudentAge($user, $data['age']);
+                        $this->requestStudentSex($user);
+
+                    } elseif ($data['type'] == self::TYPE_COACH) {
+                        $this->setCoachAge($user, $data['age']);
+                        $this->requestCoachSex($user);
+                    }
+                    break;
+
+                case self::ACTION_SEX:
+                    if ($data['type'] == self::TYPE_STUDENT) {
+                        $this->setStudentSex($user, $data['sex']);
+                        $this->requestStudentContact($user);
+
+                    } elseif ($data['type'] == self::TYPE_COACH) {
+                        $this->setCoachSex($user, $data['age']);
+                        $this->requestCoachContact($user);
                     }
                     break;
 
@@ -166,8 +206,91 @@ class SiteController extends Controller
         $student->save();
     }
 
-    private function requestStudentSport($student)
+    private function requestStudentAge($user)
     {
+        $student = Student::findOne(['telegram_id' => $user['id']]);
+        if ($student === null) {
+            return;
+        }
+
+        $keyboard = $this->getAgeKeyboard(self::TYPE_STUDENT, Student::AGES);
+        $this->send($student->telegram_id, 'Укажите ваш возраст', $keyboard);
+
+        $student->response_state = Student::RESPONSE_AGE;
+        $student->save();
+    }
+
+    private function setStudentAge($user, $age)
+    {
+        $student = Student::findOne(['telegram_id' => $user['id']]);
+        if ($student === null) {
+            return;
+        }
+        if ($student->response_state != Student::RESPONSE_AGE) {
+            return;
+        }
+
+        $student->age = $age;
+        $student->response_state = Student::RESPONSE_NONE;
+        $student->save();
+    }
+
+    private function requestStudentSex($user)
+    {
+        $student = Student::findOne(['telegram_id' => $user['id']]);
+        if ($student === null) {
+            return;
+        }
+
+        $keyboard = $this->getSexKeyboard(self::TYPE_STUDENT, Student::SEXES);
+        $this->send($student->telegram_id, 'Укажите ваш пол', $keyboard);
+
+        $student->response_state = Student::RESPONSE_SEX;
+        $student->save();
+    }
+
+    private function setStudentSex($user, $sex)
+    {
+        $student = Student::findOne(['telegram_id' => $user['id']]);
+        if ($student === null) {
+            return;
+        }
+        if ($student->response_state != Student::RESPONSE_SEX) {
+            return;
+        }
+
+        $student->sex = $sex;
+        $student->response_state = Student::RESPONSE_NONE;
+        $student->save();
+    }
+
+    private function requestStudentContact($user)
+    {
+        $student = Student::findOne(['telegram_id' => $user['id']]);
+        if ($student === null) {
+            return;
+        }
+
+        $this->send($user['id'], 'Отправьте контакты для связи (телефон или почта). Они будут отображаться вашему тренеру');
+
+        $student->response_state = Student::RESPONSE_CONTACT;
+        $student->save();
+    }
+
+    private function setStudentContact($student, $text)
+    {
+        $student->contact = trim($text);
+        $student->response_state = Student::RESPONSE_NONE;
+        $student->save();
+    }
+
+    private function requestStudentSport($user)
+    {
+        $student = Student::findOne(['telegram_id' => $user['id']]);
+        if ($student === null) {
+            return;
+        }
+
         $keyboard = $this->getSportKeyboard(self::TYPE_STUDENT);
         $this->send($student->telegram_id, 'Выберите вид спорта для тренировок', $keyboard);
 
@@ -196,7 +319,9 @@ class SiteController extends Controller
         if ($coach === null) {
             $this->send($user['id'], 'Мы не смогли найти тренера по вашему запросу');
         } else {
-            $this->send($user['id'], 'Мы нашли вам тренера – ' . $coach->name);
+            $sex = Coach::SEXES[$coach->sex] ?? 'Не указан пол';
+            $age = Coach::AGES[$coach->age] . ' лет' ?? 'не указан возраст';
+            $this->send($user['id'], "Мы нашли вам тренера:\n\n{$coach->name}\n{$sex}, {$age}\nКонтакты:\n{$coach->contact}");
         }
     }
 
@@ -221,6 +346,84 @@ class SiteController extends Controller
     private function setCoachName($coach, $text)
     {
         $coach->name = trim($text);
+        $coach->response_state = Coach::RESPONSE_NONE;
+        $coach->save();
+    }
+
+    private function requestCoachAge($user)
+    {
+        $coach = Coach::findOne(['telegram_id' => $user['id']]);
+        if ($coach === null) {
+            return;
+        }
+
+        $keyboard = $this->getAgeKeyboard(self::TYPE_COACH, Coach::AGES);
+        $this->send($coach->telegram_id, 'Укажите ваш возраст', $keyboard);
+
+        $coach->response_state = Coach::RESPONSE_AGE;
+        $coach->save();
+    }
+
+    private function setCoachAge($user, $age)
+    {
+        $coach = Coach::findOne(['telegram_id' => $user['id']]);
+        if ($coach === null) {
+            return;
+        }
+        if ($coach->response_state != Coach::RESPONSE_AGE) {
+            return;
+        }
+
+        $coach->age = $age;
+        $coach->response_state = Coach::RESPONSE_NONE;
+        $coach->save();
+    }
+
+    private function requestCoachSex($user)
+    {
+        $coach = Coach::findOne(['telegram_id' => $user['id']]);
+        if ($coach === null) {
+            return;
+        }
+
+        $keyboard = $this->getSexKeyboard(self::TYPE_COACH, Coach::SEXES);
+        $this->send($coach->telegram_id, 'Укажите ваш пол', $keyboard);
+
+        $coach->response_state = Coach::RESPONSE_SEX;
+        $coach->save();
+    }
+
+    private function setCoachSex($user, $sex)
+    {
+        $coach = Coach::findOne(['telegram_id' => $user['id']]);
+        if ($coach === null) {
+            return;
+        }
+        if ($coach->response_state != Coach::RESPONSE_SEX) {
+            return;
+        }
+
+        $coach->sex = $sex;
+        $coach->response_state = Coach::RESPONSE_NONE;
+        $coach->save();
+    }
+
+    private function requestCoachContact($user)
+    {
+        $coach = Coach::findOne(['telegram_id' => $user['id']]);
+        if ($coach === null) {
+            return;
+        }
+
+        $this->send($user['id'], 'Отправьте контакты для связи (телефон или почта). Они будут отображаться спортсменам');
+
+        $coach->response_state = Coach::RESPONSE_CONTACT;
+        $coach->save();
+    }
+
+    private function setCoachContact($coach, $text)
+    {
+        $coach->contact = trim($text);
         $coach->response_state = Coach::RESPONSE_NONE;
         $coach->save();
     }
@@ -252,6 +455,46 @@ class SiteController extends Controller
     private function welcomeCoach($user)
     {
         $this->send($user['id'], 'Мы пришлём вам контакты спортсменов');
+    }
+
+    private function getAgeKeyboard($type, $ages)
+    {
+        $chunks = array_chunk($ages, 3, true);
+
+        $buttons = [];
+        foreach ($chunks as $ages) {
+            $row = [];
+            foreach ($ages as $id => $name) {
+                $row[] = [
+                    'text' => $name,
+                    'callback_data' => http_build_query([
+                        'action' => self::ACTION_AGE,
+                        'type' => $type,
+                        'age' => $id,
+                    ]),
+                ];
+            }
+            $buttons[] = $row;
+        }
+
+        return new InlineKeyboardMarkup($buttons);
+    }
+
+    private function getSexKeyboard($type, $sexes)
+    {
+        $row = [];
+        foreach ($sexes as $id => $name) {
+            $row[] = [
+                'text' => $name,
+                'callback_data' => http_build_query([
+                    'action' => self::ACTION_SEX,
+                    'type' => $type,
+                    'sex' => $id,
+                ]),
+            ];
+        }
+
+        return new InlineKeyboardMarkup([$row]);
     }
 
     private function getSportKeyboard($type)
