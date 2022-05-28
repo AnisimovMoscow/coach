@@ -79,11 +79,13 @@ class SiteController extends Controller
                 $student = Student::findOne(['telegram_id' => $chat['id']]);
                 if ($student !== null && $student->response_state == Student::RESPONSE_NAME) {
                     $this->setStudentName($student, $message['text']);
+                    $this->requestStudentSport($student);
                 }
 
                 $coach = Coach::findOne(['telegram_id' => $chat['id']]);
                 if ($coach !== null && $coach->response_state == Coach::RESPONSE_NAME) {
                     $this->setCoachName($coach, $message['text']);
+                    $this->requestCoachSport($coach);
                 }
             }
         } elseif (array_key_exists('callback_query', $update)) {
@@ -93,17 +95,23 @@ class SiteController extends Controller
             switch ($data['action']) {
                 case self::ACTION_TYPE:
                     if ($data['type'] == self::TYPE_STUDENT) {
-                        $this->createStudent($user);
+                        $student = $this->createStudent($user);
+                        $this->requestStudentName($user, $student);
+
                     } elseif ($data['type'] == self::TYPE_COACH) {
-                        $this->createCoach($user);
+                        $coach = $this->createCoach($user);
+                        $this->requestCoachName($user, $coach);
                     }
                     break;
 
                 case self::ACTION_SPORT:
                     if ($data['type'] == self::TYPE_STUDENT) {
                         $this->setStudentSport($user, $data['sport']);
+                        $this->findCoach($user, $data['sport']);
+
                     } elseif ($data['type'] == self::TYPE_COACH) {
                         $this->setCoachSport($user, $data['sport']);
+                        $this->welcomeCoach($user);
                     }
                     break;
             }
@@ -140,8 +148,11 @@ class SiteController extends Controller
             return;
         }
 
-        $student = Student::add($user);
+        return Student::add($user);
+    }
 
+    private function requestStudentName($user, $student)
+    {
         $this->send($user['id'], 'Отправьте ваше имя. Оно будет отображаться тренеру');
 
         $student->response_state = Student::RESPONSE_NAME;
@@ -150,28 +161,16 @@ class SiteController extends Controller
 
     private function setStudentName($student, $text)
     {
-        $sports = Sport::find()->orderBy('name')->all();
-        $chunks = array_chunk($sports, 2);
+        $student->name = trim($text);
+        $student->response_state = Student::RESPONSE_NONE;
+        $student->save();
+    }
 
-        $buttons = [];
-        foreach ($chunks as $sports) {
-            $row = [];
-            foreach ($sports as $sport) {
-                $row[] = [
-                    'text' => $sport->name,
-                    'callback_data' => http_build_query([
-                        'action' => self::ACTION_SPORT,
-                        'type' => self::TYPE_STUDENT,
-                        'sport' => $sport->id,
-                    ]),
-                ];
-            }
-            $buttons[] = $row;
-        }
-        $keyboard = new InlineKeyboardMarkup($buttons);
+    private function requestStudentSport($student)
+    {
+        $keyboard = $this->getSportKeyboard(self::TYPE_STUDENT);
         $this->send($student->telegram_id, 'Выберите вид спорта для тренировок', $keyboard);
 
-        $student->name = trim($text);
         $student->response_state = Student::RESPONSE_SPORT;
         $student->save();
     }
@@ -186,16 +185,19 @@ class SiteController extends Controller
             return;
         }
 
+        $student->sport_id = $sportId;
+        $student->response_state = Student::RESPONSE_NONE;
+        $student->save();
+    }
+
+    private function findCoach($user, $sportId)
+    {
         $coach = Coach::findByFilter(['sport_id' => $sportId]);
         if ($coach === null) {
             $this->send($user['id'], 'Мы не смогли найти тренера по вашему запросу');
         } else {
             $this->send($user['id'], 'Мы нашли вам тренера – ' . $coach->name);
         }
-
-        $student->sport_id = $sportId;
-        $student->response_state = Student::RESPONSE_NONE;
-        $student->save();
     }
 
     private function createCoach($user)
@@ -205,8 +207,11 @@ class SiteController extends Controller
             return;
         }
 
-        $coach = Coach::add($user);
+        return Coach::add($user);
+    }
 
+    private function requestCoachName($user, $coach)
+    {
         $this->send($user['id'], 'Отправьте ваше имя. Оно будет отображаться спортсменам');
 
         $coach->response_state = Coach::RESPONSE_NAME;
@@ -215,28 +220,16 @@ class SiteController extends Controller
 
     private function setCoachName($coach, $text)
     {
-        $sports = Sport::find()->orderBy('name')->all();
-        $chunks = array_chunk($sports, 2);
-
-        $buttons = [];
-        foreach ($chunks as $sports) {
-            $row = [];
-            foreach ($sports as $sport) {
-                $row[] = [
-                    'text' => $sport->name,
-                    'callback_data' => http_build_query([
-                        'action' => self::ACTION_SPORT,
-                        'type' => self::TYPE_COACH,
-                        'sport' => $sport->id,
-                    ]),
-                ];
-            }
-            $buttons[] = $row;
-        }
-        $keyboard = new InlineKeyboardMarkup($buttons);
-        $this->send($coach->telegram_id, 'Выберите вид спорта которым вы занимаетесь', $keyboard);
-
         $coach->name = trim($text);
+        $coach->response_state = Coach::RESPONSE_NONE;
+        $coach->save();
+    }
+
+    private function requestCoachSport($coach)
+    {
+        $keyboard = $this->getSportKeyboard(self::TYPE_COACH);
+        $this->send($coach->telegram_id, 'Выберите вид спорта, которым вы занимаетесь', $keyboard);
+
         $coach->response_state = Coach::RESPONSE_SPORT;
         $coach->save();
     }
@@ -251,11 +244,38 @@ class SiteController extends Controller
             return;
         }
 
-        $this->send($user['id'], 'Мы пришлём вам контакты спортсменов');
-
         $coach->sport_id = $sportId;
         $coach->response_state = Student::RESPONSE_NONE;
         $coach->save();
+    }
+
+    private function welcomeCoach($user)
+    {
+        $this->send($user['id'], 'Мы пришлём вам контакты спортсменов');
+    }
+
+    private function getSportKeyboard($type)
+    {
+        $sports = Sport::find()->orderBy('name')->all();
+        $chunks = array_chunk($sports, 2);
+
+        $buttons = [];
+        foreach ($chunks as $sports) {
+            $row = [];
+            foreach ($sports as $sport) {
+                $row[] = [
+                    'text' => $sport->name,
+                    'callback_data' => http_build_query([
+                        'action' => self::ACTION_SPORT,
+                        'type' => $type,
+                        'sport' => $sport->id,
+                    ]),
+                ];
+            }
+            $buttons[] = $row;
+        }
+
+        return new InlineKeyboardMarkup($buttons);
     }
 
     private function send($chatId, $text, $keyboard = null)
