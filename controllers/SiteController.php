@@ -93,6 +93,7 @@ class SiteController extends Controller
                         case Student::RESPONSE_CONTACT:
                             $this->setStudentContact($student, $message['text']);
                             $this->requestStudentFormat($chat);
+                            break;
                     }
                 } else {
                     $coach = Coach::findOne(['telegram_id' => $chat['id']]);
@@ -106,10 +107,12 @@ class SiteController extends Controller
                             case Coach::RESPONSE_CONTACT:
                                 $this->setCoachContact($coach, $message['text']);
                                 $this->requestCoachFormat($chat);
+                                break;
 
                             case Coach::RESPONSE_ABOUT:
                                 $this->setCoachAbout($coach, $message['text']);
                                 $this->welcomeCoach($chat);
+                                break;
                         }
                     }
                 }
