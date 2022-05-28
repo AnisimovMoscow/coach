@@ -56,6 +56,15 @@ use yii\widgets\ActiveForm;
         </div>
     </div>
 
+    <?php if (!$coach->isNewRecord): ?>
+        <div class="row mb-3">
+            <?=Html::activeLabel($coach, 'response_state', ['class' => 'col-sm-3 col-form-label'])?>
+            <div class="col-sm-9">
+                <?=Html::activeInput('text', $coach, 'response_state', ['readonly' => true, 'class' => 'form-control-plaintext'])?>
+            </div>
+        </div>
+    <?php endif;?>
+
     <div class="row mb-3">
         <div class="col-sm-6 offset-sm-3">
             <?=Html::submitButton(($coach->isNewRecord) ? 'Добавить' : 'Сохранить', ['class' => 'btn btn-primary'])?>

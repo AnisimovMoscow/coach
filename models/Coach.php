@@ -41,6 +41,7 @@ class Coach extends ActiveRecord
             'telegram_id' => $user['id'],
             'telegram_name' => $name,
             'telegram_username' => $user['username'] ?? '',
+            'response_state' => self::RESPONSE_NONE,
         ]);
         $coach->save();
     }

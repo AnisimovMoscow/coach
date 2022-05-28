@@ -234,7 +234,7 @@ class SiteController extends Controller
         $this->send($coach->telegram_id, 'Выберите вид спорта которым вы занимаетесь', $keyboard);
 
         $coach->name = trim($text);
-        $coach->response_state = Student::RESPONSE_SPORT;
+        $coach->response_state = Coach::RESPONSE_SPORT;
         $coach->save();
     }
 
