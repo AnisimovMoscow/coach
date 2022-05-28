@@ -16,11 +16,11 @@ class SiteController extends Controller
 {
     const COMMAND_START = '/start';
 
-    const TYPE_COACH = 'coach';
-    const TYPE_STUDENT = 'student';
+    const TYPE_STUDENT = 1;
+    const TYPE_COACH = 2;
 
-    const ACTION_TYPE = 'type';
-    const ACTION_SPORT = 'sport';
+    const ACTION_TYPE = 1;
+    const ACTION_SPORT = 2;
 
     public function behaviors()
     {
@@ -77,31 +77,33 @@ class SiteController extends Controller
                 $this->start($chat['id']);
             } else {
                 $student = Student::findOne(['telegram_id' => $chat['id']]);
-                if ($student !== null && $student->response_state === Student::RESPONSE_NAME) {
+                if ($student !== null && $student->response_state == Student::RESPONSE_NAME) {
                     $this->setStudentName($student, $message['text']);
                 }
+
                 $coach = Coach::findOne(['telegram_id' => $chat['id']]);
-                if ($coach !== null && $coach->response_state === Student::RESPONSE_NAME) {
+                if ($coach !== null && $coach->response_state == Coach::RESPONSE_NAME) {
                     $this->setCoachName($coach, $message['text']);
                 }
             }
         } elseif (array_key_exists('callback_query', $update)) {
             parse_str($update['callback_query']['data'], $data);
+            $user = $update['callback_query']['from'];
 
             switch ($data['action']) {
                 case self::ACTION_TYPE:
-                    if ($data['type'] === self::TYPE_STUDENT) {
-                        $this->createStudent($update['callback_query']['from']);
+                    if ($data['type'] == self::TYPE_STUDENT) {
+                        $this->createStudent($user);
                     } elseif ($data['type'] === self::TYPE_COACH) {
-                        $this->createCoach($update['callback_query']['from']);
+                        $this->createCoach($user);
                     }
                     break;
 
                 case self::ACTION_SPORT:
-                    if ($data['type'] === self::TYPE_STUDENT) {
-                        $this->setStudentSport($update['callback_query']['from'], $data['sport']);
+                    if ($data['type'] == self::TYPE_STUDENT) {
+                        $this->setStudentSport($user, $data['sport']);
                     } elseif ($data['type'] === self::TYPE_COACH) {
-                        $this->setCoachSport($update['callback_query']['from'], $data['sport']);
+                        $this->setCoachSport($user, $data['sport']);
                     }
                     break;
             }
@@ -128,7 +130,7 @@ class SiteController extends Controller
                 ],
             ],
         ]);
-        $this->send($id, 'Подберу вам тренера для занятий или найду спорстмена для тренировки. Ты тренер или спортсмен?', $keyboard);
+        $this->send($id, 'Подберу вам тренера для занятий или найду спорстмена для тренировки. Вы спортсмен или тренер?', $keyboard);
     }
 
     private function createStudent($user)
@@ -180,7 +182,7 @@ class SiteController extends Controller
         if ($student === null) {
             return;
         }
-        if ($student->response_state !== Student::RESPONSE_SPORT) {
+        if ($student->response_state != Student::RESPONSE_SPORT) {
             return;
         }
 
@@ -206,6 +208,51 @@ class SiteController extends Controller
         Coach::add($user);
 
         $this->send($user['id'], 'Отправьте ваше имя. Оно будет отображаться спортсменам');
+    }
+
+    private function setCoachName($coach, $text)
+    {
+        $sports = Sport::find()->orderBy('name')->all();
+        $chunks = array_chunk($sports, 2);
+
+        $buttons = [];
+        foreach ($chunks as $sports) {
+            $row = [];
+            foreach ($sports as $sport) {
+                $row[] = [
+                    'text' => $sport->name,
+                    'callback_data' => http_build_query([
+                        'action' => self::ACTION_SPORT,
+                        'type' => self::TYPE_COACH,
+                        'sport' => $sport->id,
+                    ]),
+                ];
+            }
+            $buttons[] = $row;
+        }
+        $keyboard = new InlineKeyboardMarkup($buttons);
+        $this->send($coach->telegram_id, 'Выберите вид спорта которым вы занимаетесь', $keyboard);
+
+        $coach->name = trim($text);
+        $coach->response_state = Student::RESPONSE_SPORT;
+        $coach->save();
+    }
+
+    private function setCoachSport($user, $sportId)
+    {
+        $coach = Coach::findOne(['telegram_id' => $user['id']]);
+        if ($coach === null) {
+            return;
+        }
+        if ($coach->response_state != Student::RESPONSE_SPORT) {
+            return;
+        }
+
+        $this->send($user['id'], 'Мы пришлём вам контакты спортсменов');
+
+        $coach->sport_id = $sportId;
+        $coach->response_state = Student::RESPONSE_NONE;
+        $coach->save();
     }
 
     private function send($chatId, $text, $keyboard = null)

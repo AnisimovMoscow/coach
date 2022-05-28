@@ -6,6 +6,10 @@ use yii\db\ActiveRecord;
 
 class Coach extends ActiveRecord
 {
+    const RESPONSE_NONE = 0;
+    const RESPONSE_NAME = 1;
+    const RESPONSE_SPORT = 2;
+
     public function attributeLabels()
     {
         return [
