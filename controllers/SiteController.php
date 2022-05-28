@@ -415,11 +415,26 @@ class SiteController extends Controller
         if ($coach === null) {
             $this->send($user['id'], 'Мы не смогли найти тренера по вашему запросу');
         } else {
+            $message = "Мы нашли вам тренера:\n\n{$coach->name}\n";
+
             $sex = Coach::SEXES[$coach->sex] ?? 'Не указан пол';
             $age = array_key_exists($coach->age, Coach::AGES) ? Coach::AGES[$coach->age] . ' лет' : 'Не указан возраст';
+            $message .= "{$sex}, {$age}\n";
+
             $format = array_key_exists($coach->format, Coach::FORMATS) ? 'Форматы тренировок: ' . Coach::FORMATS[$coach->format] : 'Не указаны форматы тренировок';
+            $message .= "{$format}\n";
+
             $city = ($coach->city !== null) ? 'Город: ' . $coach->city->name : 'Не указан город';
-            $this->send($user['id'], "Мы нашли вам тренера:\n\n{$coach->name}\n{$sex}, {$age}\n{$format}\n{$city}\nКонтакты:\n{$coach->contact}");
+            $message .= "{$city}\n";
+
+            $message .= "Контакты:\n{$coach->contact}\n";
+            if (!empty($coach->telegram_username)){
+                $message .= "Телеграм: https://t.me/{$coach->telegram_username}\n";
+            }
+
+            $message .= "О себе:\n{$coach->about}";
+            
+            $this->send($user['id'], $message);
         }
     }
 
