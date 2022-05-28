@@ -409,7 +409,7 @@ class SiteController extends Controller
         } else {
             $sex = Coach::SEXES[$coach->sex] ?? 'Не указан пол';
             $age = array_key_exists($coach->age, Coach::AGES) ? Coach::AGES[$coach->age] . ' лет' : 'Не указан возраст';
-            $format = array_key_exists($coach->format, Coach::FORMATS) ? 'Форматы тренировок: ' . Coach::FORMATS[$coach->age] : 'Не указаны форматы тренировок';
+            $format = array_key_exists($coach->format, Coach::FORMATS) ? 'Форматы тренировок: ' . Coach::FORMATS[$coach->format] : 'Не указаны форматы тренировок';
             $city = ($coach->city !== null) ? 'Город: ' . $coach->city->name : 'Не указан город';
             $this->send($user['id'], "Мы нашли вам тренера:\n\n{$coach->name}\n{$sex}, {$age}\n{$format}\n{$city}\nКонтакты:\n{$coach->contact}");
         }
