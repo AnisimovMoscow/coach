@@ -19,6 +19,7 @@ class Coach extends ActiveRecord
             'telegram_id' => 'ID в Telegram',
             'telegram_name' => 'Имя в Telegram',
             'telegram_username' => 'Ник в Telegram',
+            'response_state' => 'Состояние ответа',
         ];
     }
 

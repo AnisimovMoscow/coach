@@ -13,6 +13,7 @@ class m220527_171749_add_coach extends Migration
             'telegram_id' => $this->string(),
             'telegram_name' => $this->string(),
             'telegram_username' => $this->string(),
+            'response_state' => $this->integer(),
         ]);
         $this->createIndex('sport', 'coach', 'sport_id');
         $this->createIndex('telegram', 'coach', 'telegram_id');
