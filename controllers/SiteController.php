@@ -67,13 +67,13 @@ class SiteController extends Controller
             $message = $update['message'];
             $chat = $message['chat'];
 
-            if ($chat['type'] !== 'private') {
+            if ($chat['type'] != 'private') {
                 return;
             }
             if (!array_key_exists('text', $message)) {
                 return;
             }
-            if ($message['text'] === self::COMMAND_START) {
+            if ($message['text'] == self::COMMAND_START) {
                 $this->start($chat['id']);
             } else {
                 $student = Student::findOne(['telegram_id' => $chat['id']]);
@@ -205,9 +205,12 @@ class SiteController extends Controller
             return;
         }
 
-        Coach::add($user);
+        $coach = Coach::add($user);
 
         $this->send($user['id'], 'Отправьте ваше имя. Оно будет отображаться спортсменам');
+
+        $coach->response_state = Coach::RESPONSE_NAME;
+        $coach->save();
     }
 
     private function setCoachName($coach, $text)

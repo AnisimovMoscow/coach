@@ -44,6 +44,8 @@ class Coach extends ActiveRecord
             'response_state' => self::RESPONSE_NONE,
         ]);
         $coach->save();
+
+        return $coach;
     }
 
     public static function findByFilter($filter)
