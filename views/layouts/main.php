@@ -35,6 +35,7 @@ use yii\helpers\Url;
                 'items' => [
                     ['label' => 'Тренеры', 'url' => ['coaches/index']],
                     ['label' => 'Спортсмены', 'url' => ['students/index']],
+                    ['label' => 'Города', 'url' => ['cities/index']],
                     ['label' => 'Виды спорта', 'url' => ['sports/index']],
                 ],
                 'options' => ['class' => 'flex-column'],

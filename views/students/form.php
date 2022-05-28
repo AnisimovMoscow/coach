@@ -3,6 +3,8 @@
 /* @var $this yii\web\View */
 /* @var $student app\models\Student */
 
+use app\models\City;
+use app\models\Coach;
 use app\models\Sport;
 use app\models\Student;
 use yii\helpers\Html;
@@ -47,6 +49,20 @@ use yii\widgets\ActiveForm;
         <?=Html::activeLabel($student, 'contact', ['class' => 'col-sm-3 col-form-label'])?>
         <div class="col-sm-9">
             <?=Html::activeTextarea($student, 'contact', ['class' => 'form-control', 'rows' => 3])?>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <?=Html::activeLabel($student, 'format', ['class' => 'col-sm-3 col-form-label'])?>
+        <div class="col-sm-9">
+            <?=Html::activeDropDownList($student, 'format', Coach::FORMATS, ['class' => 'form-select', 'prompt' => '—'])?>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <?=Html::activeLabel($student, 'city_id', ['class' => 'col-sm-3 col-form-label'])?>
+        <div class="col-sm-9">
+            <?=Html::activeDropDownList($student, 'city_id', City::getAll(), ['class' => 'form-select', 'prompt' => '—'])?>
         </div>
     </div>
 

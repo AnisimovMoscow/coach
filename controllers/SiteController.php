@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 
+use app\models\City;
 use app\models\Coach;
 use app\models\Sport;
 use app\models\Student;
@@ -22,7 +23,9 @@ class SiteController extends Controller
     const ACTION_TYPE = 1;
     const ACTION_AGE = 2;
     const ACTION_SEX = 3;
-    const ACTION_SPORT = 4;
+    const ACTION_FORMAT = 4;
+    const ACTION_CITY = 5;
+    const ACTION_SPORT = 6;
 
     public function behaviors()
     {
@@ -88,7 +91,7 @@ class SiteController extends Controller
 
                         case Student::RESPONSE_CONTACT:
                             $this->setStudentContact($student, $message['text']);
-                            $this->requestStudentSport($chat);
+                            $this->requestStudentFormat($chat);
                     }
                 } else {
                     $coach = Coach::findOne(['telegram_id' => $chat['id']]);
@@ -101,7 +104,7 @@ class SiteController extends Controller
 
                             case Coach::RESPONSE_CONTACT:
                                 $this->setCoachContact($coach, $message['text']);
-                                $this->requestCoachSport($chat);
+                                $this->requestCoachFormat($chat);
                         }
                     }
                 }
@@ -144,10 +147,32 @@ class SiteController extends Controller
                     }
                     break;
 
+                case self::ACTION_FORMAT:
+                    if ($data['type'] == self::TYPE_STUDENT) {
+                        $this->setStudentFormat($user, $data['format']);
+                        $this->requestStudentCity($user);
+
+                    } elseif ($data['type'] == self::TYPE_COACH) {
+                        $this->setCoachFormat($user, $data['format']);
+                        $this->requestCoachCity($user);
+                    }
+                    break;
+
+                case self::ACTION_CITY:
+                    if ($data['type'] == self::TYPE_STUDENT) {
+                        $this->setStudentCity($user, $data['city']);
+                        $this->requestStudentSport($user);
+
+                    } elseif ($data['type'] == self::TYPE_COACH) {
+                        $this->setCoachCity($user, $data['city']);
+                        $this->requestCoachSport($user);
+                    }
+                    break;
+
                 case self::ACTION_SPORT:
                     if ($data['type'] == self::TYPE_STUDENT) {
                         $this->setStudentSport($user, $data['sport']);
-                        $this->findCoach($user, $data['sport']);
+                        $this->findCoach($user);
 
                     } elseif ($data['type'] == self::TYPE_COACH) {
                         $this->setCoachSport($user, $data['sport']);
@@ -284,6 +309,64 @@ class SiteController extends Controller
         $student->save();
     }
 
+    private function requestStudentFormat($user)
+    {
+        $student = Student::findOne(['telegram_id' => $user['id']]);
+        if ($student === null) {
+            return;
+        }
+
+        $keyboard = $this->getFormatKeyboard(self::TYPE_STUDENT);
+        $this->send($student->telegram_id, 'Выберите желаемый формат тренировок', $keyboard);
+
+        $student->response_state = Student::RESPONSE_FORMAT;
+        $student->save();
+    }
+
+    private function setStudentFormat($user, $format)
+    {
+        $student = Student::findOne(['telegram_id' => $user['id']]);
+        if ($student === null) {
+            return;
+        }
+        if ($student->response_state != Student::RESPONSE_FORMAT) {
+            return;
+        }
+
+        $student->format = $format;
+        $student->response_state = Student::RESPONSE_NONE;
+        $student->save();
+    }
+
+    private function requestStudentCity($user)
+    {
+        $student = Student::findOne(['telegram_id' => $user['id']]);
+        if ($student === null) {
+            return;
+        }
+
+        $keyboard = $this->getCityKeyboard(self::TYPE_STUDENT, $student->format);
+        $this->send($student->telegram_id, 'Выберите ваш город', $keyboard);
+
+        $student->response_state = Student::RESPONSE_CITY;
+        $student->save();
+    }
+
+    private function setStudentCity($user, $cityId)
+    {
+        $student = Student::findOne(['telegram_id' => $user['id']]);
+        if ($student === null) {
+            return;
+        }
+        if ($student->response_state != Student::RESPONSE_CITY) {
+            return;
+        }
+
+        $student->city_id = $cityId;
+        $student->response_state = Student::RESPONSE_NONE;
+        $student->save();
+    }
+
     private function requestStudentSport($user)
     {
         $student = Student::findOne(['telegram_id' => $user['id']]);
@@ -313,15 +396,22 @@ class SiteController extends Controller
         $student->save();
     }
 
-    private function findCoach($user, $sportId)
+    private function findCoach($user)
     {
-        $coach = Coach::findByFilter(['sport_id' => $sportId]);
+        $student = Student::findOne(['telegram_id' => $user['id']]);
+        if ($student === null) {
+            return;
+        }
+
+        $coach = Coach::findByFilter($student);
         if ($coach === null) {
             $this->send($user['id'], 'Мы не смогли найти тренера по вашему запросу');
         } else {
             $sex = Coach::SEXES[$coach->sex] ?? 'Не указан пол';
-            $age = Coach::AGES[$coach->age] . ' лет' ?? 'не указан возраст';
-            $this->send($user['id'], "Мы нашли вам тренера:\n\n{$coach->name}\n{$sex}, {$age}\nКонтакты:\n{$coach->contact}");
+            $age = array_key_exists($coach->age, Coach::AGES) ? Coach::AGES[$coach->age] . ' лет' : 'Не указан возраст';
+            $format = array_key_exists($coach->format, Coach::FORMATS) ? 'Форматы тренировок: ' . Coach::FORMATS[$coach->age] : 'Не указаны форматы тренировок';
+            $city = ($coach->city !== null) ? 'Город: ' . $coach->city->name : 'Не указан город';
+            $this->send($user['id'], "Мы нашли вам тренера:\n\n{$coach->name}\n{$sex}, {$age}\n{$format}\n{$city}\nКонтакты:\n{$coach->contact}");
         }
     }
 
@@ -428,13 +518,71 @@ class SiteController extends Controller
         $coach->save();
     }
 
+    private function requestCoachFormat($user)
+    {
+        $coach = Coach::findOne(['telegram_id' => $user['id']]);
+        if ($coach === null) {
+            return;
+        }
+
+        $keyboard = $this->getFormatKeyboard(self::TYPE_COACH);
+        $this->send($coach->telegram_id, 'Выберите желаемый формат тренировок', $keyboard);
+
+        $coach->response_state = Coach::RESPONSE_FORMAT;
+        $coach->save();
+    }
+
+    private function setCoachFormat($user, $format)
+    {
+        $coach = Coach::findOne(['telegram_id' => $user['id']]);
+        if ($coach === null) {
+            return;
+        }
+        if ($coach->response_state != Coach::RESPONSE_FORMAT) {
+            return;
+        }
+
+        $coach->format = $format;
+        $coach->response_state = Coach::RESPONSE_NONE;
+        $coach->save();
+    }
+
+    private function requestCoachCity($user)
+    {
+        $coach = Coach::findOne(['telegram_id' => $user['id']]);
+        if ($coach === null) {
+            return;
+        }
+
+        $keyboard = $this->getCityKeyboard(self::TYPE_COACH, $coach->format);
+        $this->send($coach->telegram_id, 'Укажите ваш город', $keyboard);
+
+        $coach->response_state = Coach::RESPONSE_CITY;
+        $coach->save();
+    }
+
+    private function setCoachCity($user, $cityId)
+    {
+        $coach = Coach::findOne(['telegram_id' => $user['id']]);
+        if ($coach === null) {
+            return;
+        }
+        if ($coach->response_state != Coach::RESPONSE_CITY) {
+            return;
+        }
+
+        $coach->city_id = $cityId;
+        $coach->response_state = Coach::RESPONSE_NONE;
+        $coach->save();
+    }
+
     private function requestCoachSport($user)
     {
         $coach = Coach::findOne(['telegram_id' => $user['id']]);
         if ($coach === null) {
             return;
         }
-        
+
         $keyboard = $this->getSportKeyboard(self::TYPE_COACH);
         $this->send($coach->telegram_id, 'Выберите вид спорта, которым вы занимаетесь', $keyboard);
 
@@ -502,10 +650,57 @@ class SiteController extends Controller
         return new InlineKeyboardMarkup([$row]);
     }
 
+    private function getFormatKeyboard($type)
+    {
+        $row = [];
+        foreach (Coach::FORMATS as $id => $name) {
+            $row[] = [
+                'text' => $name,
+                'callback_data' => http_build_query([
+                    'action' => self::ACTION_FORMAT,
+                    'type' => $type,
+                    'format' => $id,
+                ]),
+            ];
+        }
+
+        return new InlineKeyboardMarkup([$row]);
+    }
+
+    private function getCityKeyboard($type, $format)
+    {
+        $cities = City::find()->orderBy('name')->all();
+        if ($format != Coach::FORMAT_OFFLINE) {
+            $cities[] = new City([
+                'id' => 0,
+                'name' => 'другой',
+            ]);
+        }
+        $chunks = array_chunk($cities, 3);
+
+        $buttons = [];
+        foreach ($chunks as $cities) {
+            $row = [];
+            foreach ($cities as $city) {
+                $row[] = [
+                    'text' => $city->name,
+                    'callback_data' => http_build_query([
+                        'action' => self::ACTION_CITY,
+                        'type' => $type,
+                        'city' => $city->id,
+                    ]),
+                ];
+            }
+            $buttons[] = $row;
+        }
+
+        return new InlineKeyboardMarkup($buttons);
+    }
+
     private function getSportKeyboard($type)
     {
         $sports = Sport::find()->orderBy('name')->all();
-        $chunks = array_chunk($sports, 2);
+        $chunks = array_chunk($sports, 3);
 
         $buttons = [];
         foreach ($chunks as $sports) {
