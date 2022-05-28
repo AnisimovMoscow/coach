@@ -419,17 +419,17 @@ class SiteController extends Controller
 
             $sex = Coach::SEXES[$coach->sex] ?? 'Не указан пол';
             $age = array_key_exists($coach->age, Coach::AGES) ? Coach::AGES[$coach->age] . ' лет' : 'Не указан возраст';
-            $message .= "{$sex}, {$age}\n";
+            $message .= "{$sex}, {$age}\n\n";
 
             $format = array_key_exists($coach->format, Coach::FORMATS) ? 'Форматы тренировок: ' . Coach::FORMATS[$coach->format] : 'Не указаны форматы тренировок';
             $message .= "{$format}\n";
 
             $city = ($coach->city !== null) ? 'Город: ' . $coach->city->name : 'Не указан город';
-            $message .= "{$city}\n";
+            $message .= "{$city}\n\n";
 
-            $message .= "Контакты:\n{$coach->contact}\n";
+            $message .= "Контакты:\n{$coach->contact}\n\n";
             if (!empty($coach->telegram_username)){
-                $message .= "Телеграм: https://t.me/{$coach->telegram_username}\n";
+                $message .= "Телеграм: https://t.me/{$coach->telegram_username}\n\n";
             }
 
             $message .= "О себе:\n{$coach->about}";
