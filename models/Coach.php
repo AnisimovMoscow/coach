@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use Yii;
 use yii\db\ActiveRecord;
 
 class Coach extends ActiveRecord
@@ -70,6 +71,16 @@ class Coach extends ActiveRecord
         ];
     }
 
+    public function beforeDelete()
+    {
+        if (!parent::beforeDelete()) {
+            return false;
+        }
+
+        Yii::$app->db->createCommand()->delete('coach_student', ['coach_id' => $this->id])->execute();
+        return true;
+    }
+
     public function getCity()
     {
         return $this->hasOne(City::class, ['id' => 'city_id']);
@@ -124,7 +135,15 @@ class Coach extends ActiveRecord
         }
 
         $key = array_rand($ids);
+        $coach = Coach::findOne($ids[$key]);
 
-        return Coach::findOne($ids[$key]);
+        if ($coach !== null) {
+            Yii::$app->db->createCommand()->insert('coach_student', [
+                'coach_id' => $coach->id,
+                'student_id' => $student->id,
+            ])->execute();
+        }
+
+        return $coach;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use Yii;
 use yii\db\ActiveRecord;
 
 class Student extends ActiveRecord
@@ -56,6 +57,21 @@ class Student extends ActiveRecord
         return [
             [['name', 'age', 'sex', 'contact', 'format', 'city_id', 'sport_id', 'telegram_id', 'telegram_name', 'telegram_username'], 'safe'],
         ];
+    }
+
+    public function beforeDelete()
+    {
+        if (!parent::beforeDelete()) {
+            return false;
+        }
+
+        Yii::$app->db->createCommand()->delete('coach_student', ['student_id' => $this->id])->execute();
+        return true;
+    }
+
+    public function getCoach()
+    {
+        return Coach::find()->innerJoin('coach_student cs', 'cs.coach_id = coach.id')->where(['cs.student_id' => $this->id])->one();
     }
 
     public static function add($user)

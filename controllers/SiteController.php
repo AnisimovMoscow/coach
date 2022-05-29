@@ -16,6 +16,7 @@ use yii\web\Controller;
 class SiteController extends Controller
 {
     const COMMAND_START = '/start';
+    const COMMAND_COACH = '/coach';
 
     const TYPE_STUDENT = 1;
     const TYPE_COACH = 2;
@@ -80,7 +81,9 @@ class SiteController extends Controller
                 return;
             }
             if ($message['text'] == self::COMMAND_START) {
-                $this->start($chat['id']);
+                $this->start($chat);
+            } elseif ($message['text'] == self::COMMAND_COACH) {
+                $this->coach($chat);
             } else {
                 $student = Student::findOne(['telegram_id' => $chat['id']]);
                 if ($student !== null) {
@@ -191,7 +194,7 @@ class SiteController extends Controller
         }
     }
 
-    private function start($id)
+    private function start($user)
     {
         $keyboard = new InlineKeyboardMarkup([
             [
@@ -211,7 +214,43 @@ class SiteController extends Controller
                 ],
             ],
         ]);
-        $this->send($id, 'Подберу вам тренера для занятий или найду спорстмена для тренировки. Вы спортсмен или тренер?', $keyboard);
+        $this->send($user['id'], 'Подберу вам тренера для занятий или найду спорстмена для тренировки. Вы спортсмен или тренер?', $keyboard);
+    }
+
+    private function coach($user)
+    {
+        $student = Student::findOne(['telegram_id' => $user['id']]);
+        if ($student === null) {
+            $this->send($user['id'], 'Это работает только для спортсменов');
+            return;
+        }
+
+        $coach = $student->getCoach();
+        if ($coach === null) {
+            $this->send($user['id'], 'Не смогли подобрать тренера для вас');
+            return;
+        }
+
+        $message = "Ваш тренер:\n\n{$coach->name}\n";
+
+        $sex = Coach::SEXES[$coach->sex] ?? 'Не указан пол';
+        $age = array_key_exists($coach->age, Coach::AGES) ? Coach::AGES[$coach->age] . ' лет' : 'Не указан возраст';
+        $message .= "{$sex}, {$age}\n\n";
+
+        $format = array_key_exists($coach->format, Coach::FORMATS) ? 'Форматы тренировок: ' . Coach::FORMATS[$coach->format] : 'Не указаны форматы тренировок';
+        $message .= "{$format}\n";
+
+        $city = ($coach->city !== null) ? 'Город: ' . $coach->city->name : 'Не указан город';
+        $message .= "{$city}\n\n";
+
+        $message .= "Контакты:\n{$coach->contact}\n\n";
+        if (!empty($coach->telegram_username)) {
+            $message .= "Телеграм: https://t.me/{$coach->telegram_username}\n\n";
+        }
+
+        $message .= "О себе:\n{$coach->about}";
+
+        $this->send($user['id'], $message);
     }
 
     private function createStudent($user)
@@ -428,12 +467,12 @@ class SiteController extends Controller
             $message .= "{$city}\n\n";
 
             $message .= "Контакты:\n{$coach->contact}\n\n";
-            if (!empty($coach->telegram_username)){
+            if (!empty($coach->telegram_username)) {
                 $message .= "Телеграм: https://t.me/{$coach->telegram_username}\n\n";
             }
 
             $message .= "О себе:\n{$coach->about}";
-            
+
             $this->send($user['id'], $message);
         }
     }
