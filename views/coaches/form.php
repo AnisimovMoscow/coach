@@ -38,13 +38,6 @@ use yii\widgets\ActiveForm;
     </div>
 
     <div class="row mb-3">
-        <?=Html::activeLabel($coach, 'sex', ['class' => 'col-sm-3 col-form-label'])?>
-        <div class="col-sm-9">
-            <?=Html::activeDropDownList($coach, 'sex', Coach::SEXES, ['class' => 'form-select', 'prompt' => '—'])?>
-        </div>
-    </div>
-
-    <div class="row mb-3">
         <?=Html::activeLabel($coach, 'contact', ['class' => 'col-sm-3 col-form-label'])?>
         <div class="col-sm-9">
             <?=Html::activeTextarea($coach, 'contact', ['class' => 'form-control', 'rows' => 3])?>
