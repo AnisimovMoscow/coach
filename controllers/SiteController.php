@@ -27,6 +27,8 @@ class SiteController extends Controller
     const ACTION_CITY = 4;
     const ACTION_SPORT = 5;
     const ACTION_ABOUT = 6;
+    const ACTION_REQUEST_FORMAT = 7;
+    const ACTION_CHANGE_FORMAT = 8;
 
     public function behaviors()
     {
@@ -94,7 +96,7 @@ class SiteController extends Controller
 
                         case Student::RESPONSE_CONTACT:
                             $this->setStudentContact($student, $message['text']);
-                            $this->requestStudentFormat($chat);
+                            $this->requestStudentFormat($chat, self::ACTION_FORMAT);
                             break;
                     }
                 } else {
@@ -195,6 +197,21 @@ class SiteController extends Controller
                         $ok = $this->setCoachSport($user, $data['sport']);
                         if ($ok) {
                             $this->requestCoachAbout($user);
+                        }
+                    }
+                    break;
+
+                case self::ACTION_REQUEST_FORMAT:
+                    if ($data['type'] == self::TYPE_STUDENT) {
+                        $this->requestStudentFormat($user, self::ACTION_CHANGE_FORMAT);
+                    }
+                    break;
+
+                case self::ACTION_CHANGE_FORMAT:
+                    if ($data['type'] == self::TYPE_STUDENT) {
+                        $ok = $this->changeStudentFormat($user, $data['format']);
+                        if ($ok) {
+                            $this->findCoach($user);
                         }
                     }
                     break;
@@ -351,14 +368,14 @@ class SiteController extends Controller
         $student->save();
     }
 
-    private function requestStudentFormat($user)
+    private function requestStudentFormat($user, $action)
     {
         $student = Student::findOne(['telegram_id' => $user['id']]);
         if ($student === null) {
             return;
         }
 
-        $keyboard = $this->getFormatKeyboard(self::TYPE_STUDENT);
+        $keyboard = $this->getFormatKeyboard(self::TYPE_STUDENT, $action);
         $this->send($student->telegram_id, 'Выберите желаемый формат тренировок', $keyboard);
 
         $student->response_state = Student::RESPONSE_FORMAT;
@@ -453,7 +470,18 @@ class SiteController extends Controller
 
         $coach = Coach::findByFilter($student);
         if ($coach === null) {
-            $this->send($user['id'], 'Мы не смогли найти тренера по вашему запросу');
+            $keyboard = new InlineKeyboardMarkup([
+                [
+                    [
+                        'text' => 'Поменять формат',
+                        'callback_data' => http_build_query([
+                            'action' => self::ACTION_REQUEST_FORMAT,
+                            'type' => self::TYPE_STUDENT,
+                        ]),
+                    ],
+                ],
+            ]);
+            $this->send($user['id'], 'Мы не смогли найти тренера по вашему запросу, но вы можете поменять желаемый формат тренировок и возможно получится подобрать тренера', $keyboard);
         } else {
             $info = $this->getCoachInfo($coach);
             $this->send($user['id'], "Мы нашли вам тренера:\n\n{$info}");
@@ -557,7 +585,7 @@ class SiteController extends Controller
             return;
         }
 
-        $keyboard = $this->getFormatKeyboard(self::TYPE_COACH);
+        $keyboard = $this->getFormatKeyboard(self::TYPE_COACH, self::ACTION_FORMAT);
         $this->send($coach->telegram_id, 'Выберите желаемый формат тренировок', $keyboard);
 
         $coach->response_state = Coach::RESPONSE_FORMAT;
@@ -714,14 +742,14 @@ class SiteController extends Controller
         return new InlineKeyboardMarkup($buttons);
     }
 
-    private function getFormatKeyboard($type)
+    private function getFormatKeyboard($type, $action)
     {
         $row = [];
         foreach (Coach::FORMATS as $id => $name) {
             $row[] = [
                 'text' => $name,
                 'callback_data' => http_build_query([
-                    'action' => self::ACTION_FORMAT,
+                    'action' => $action,
                     'type' => $type,
                     'format' => $id,
                 ]),
