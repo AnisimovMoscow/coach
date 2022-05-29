@@ -141,45 +141,61 @@ class SiteController extends Controller
 
                 case self::ACTION_AGE:
                     if ($data['type'] == self::TYPE_STUDENT) {
-                        $this->setStudentAge($user, $data['age']);
-                        $this->requestStudentContact($user);
+                        $ok = $this->setStudentAge($user, $data['age']);
+                        if ($ok) {
+                            $this->requestStudentContact($user);
+                        }
 
                     } elseif ($data['type'] == self::TYPE_COACH) {
-                        $this->setCoachAge($user, $data['age']);
-                        $this->requestCoachContact($user);
+                        $ok = $this->setCoachAge($user, $data['age']);
+                        if ($ok) {
+                            $this->requestCoachContact($user);
+                        }
                     }
                     break;
 
                 case self::ACTION_FORMAT:
                     if ($data['type'] == self::TYPE_STUDENT) {
-                        $this->setStudentFormat($user, $data['format']);
-                        $this->requestStudentCity($user);
+                        $ok = $this->setStudentFormat($user, $data['format']);
+                        if ($ok) {
+                            $this->requestStudentCity($user);
+                        }
 
                     } elseif ($data['type'] == self::TYPE_COACH) {
-                        $this->setCoachFormat($user, $data['format']);
-                        $this->requestCoachCity($user);
+                        $ok = $this->setCoachFormat($user, $data['format']);
+                        if ($ok) {
+                            $this->requestCoachCity($user);
+                        }
                     }
                     break;
 
                 case self::ACTION_CITY:
                     if ($data['type'] == self::TYPE_STUDENT) {
-                        $this->setStudentCity($user, $data['city']);
-                        $this->requestStudentSport($user);
+                        $ok = $this->setStudentCity($user, $data['city']);
+                        if ($ok) {
+                            $this->requestStudentSport($user);
+                        }
 
                     } elseif ($data['type'] == self::TYPE_COACH) {
-                        $this->setCoachCity($user, $data['city']);
-                        $this->requestCoachSport($user);
+                        $ok = $this->setCoachCity($user, $data['city']);
+                        if ($ok) {
+                            $this->requestCoachSport($user);
+                        }
                     }
                     break;
 
                 case self::ACTION_SPORT:
                     if ($data['type'] == self::TYPE_STUDENT) {
-                        $this->setStudentSport($user, $data['sport']);
-                        $this->findCoach($user);
+                        $ok = $this->setStudentSport($user, $data['sport']);
+                        if ($ok) {
+                            $this->findCoach($user);
+                        }
 
                     } elseif ($data['type'] == self::TYPE_COACH) {
-                        $this->setCoachSport($user, $data['sport']);
-                        $this->requestCoachAbout($user);
+                        $ok = $this->setCoachSport($user, $data['sport']);
+                        if ($ok) {
+                            $this->requestCoachAbout($user);
+                        }
                     }
                     break;
             }
@@ -302,15 +318,17 @@ class SiteController extends Controller
     {
         $student = Student::findOne(['telegram_id' => $user['id']]);
         if ($student === null) {
-            return;
+            return false;
         }
         if ($student->response_state != Student::RESPONSE_AGE) {
-            return;
+            return false;
         }
 
         $student->age = $age;
         $student->response_state = Student::RESPONSE_NONE;
         $student->save();
+
+        return true;
     }
 
     private function requestStudentContact($user)
@@ -351,15 +369,17 @@ class SiteController extends Controller
     {
         $student = Student::findOne(['telegram_id' => $user['id']]);
         if ($student === null) {
-            return;
+            return false;
         }
         if ($student->response_state != Student::RESPONSE_FORMAT) {
-            return;
+            return false;
         }
 
         $student->format = $format;
         $student->response_state = Student::RESPONSE_NONE;
         $student->save();
+
+        return true;
     }
 
     private function requestStudentCity($user)
@@ -380,15 +400,17 @@ class SiteController extends Controller
     {
         $student = Student::findOne(['telegram_id' => $user['id']]);
         if ($student === null) {
-            return;
+            return false;
         }
         if ($student->response_state != Student::RESPONSE_CITY) {
-            return;
+            return false;
         }
 
         $student->city_id = $cityId;
         $student->response_state = Student::RESPONSE_NONE;
         $student->save();
+
+        return true;
     }
 
     private function requestStudentSport($user)
@@ -409,15 +431,17 @@ class SiteController extends Controller
     {
         $student = Student::findOne(['telegram_id' => $user['id']]);
         if ($student === null) {
-            return;
+            return false;
         }
         if ($student->response_state != Student::RESPONSE_SPORT) {
-            return;
+            return false;
         }
 
         $student->sport_id = $sportId;
         $student->response_state = Student::RESPONSE_NONE;
         $student->save();
+
+        return true;
     }
 
     private function findCoach($user)
@@ -493,15 +517,17 @@ class SiteController extends Controller
     {
         $coach = Coach::findOne(['telegram_id' => $user['id']]);
         if ($coach === null) {
-            return;
+            return false;
         }
         if ($coach->response_state != Coach::RESPONSE_AGE) {
-            return;
+            return false;
         }
 
         $coach->age = $age;
         $coach->response_state = Coach::RESPONSE_NONE;
         $coach->save();
+
+        return true;
     }
 
     private function requestCoachContact($user)
@@ -542,15 +568,17 @@ class SiteController extends Controller
     {
         $coach = Coach::findOne(['telegram_id' => $user['id']]);
         if ($coach === null) {
-            return;
+            return false;
         }
         if ($coach->response_state != Coach::RESPONSE_FORMAT) {
-            return;
+            return false;
         }
 
         $coach->format = $format;
         $coach->response_state = Coach::RESPONSE_NONE;
         $coach->save();
+
+        return true;
     }
 
     private function requestCoachCity($user)
@@ -571,15 +599,17 @@ class SiteController extends Controller
     {
         $coach = Coach::findOne(['telegram_id' => $user['id']]);
         if ($coach === null) {
-            return;
+            return false;
         }
         if ($coach->response_state != Coach::RESPONSE_CITY) {
-            return;
+            return false;
         }
 
         $coach->city_id = $cityId;
         $coach->response_state = Coach::RESPONSE_NONE;
         $coach->save();
+
+        return true;
     }
 
     private function requestCoachSport($user)
@@ -600,15 +630,17 @@ class SiteController extends Controller
     {
         $coach = Coach::findOne(['telegram_id' => $user['id']]);
         if ($coach === null) {
-            return;
+            return false;
         }
         if ($coach->response_state != Student::RESPONSE_SPORT) {
-            return;
+            return false;
         }
 
         $coach->sport_id = $sportId;
         $coach->response_state = Student::RESPONSE_NONE;
         $coach->save();
+
+        return true;
     }
 
     private function requestCoachAbout($user)
