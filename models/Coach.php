@@ -78,6 +78,16 @@ class Coach extends ActiveRecord
         return $this->hasOne(City::class, ['id' => 'city_id']);
     }
 
+    public function getSport()
+    {
+        return $this->hasOne(Sport::class, ['id' => 'sport_id']);
+    }
+
+    public function getFormatName()
+    {
+        return Coach::FORMATS[$this->format] ?? null;
+    }
+
     public static function add($user)
     {
         $name = $user['first_name'];

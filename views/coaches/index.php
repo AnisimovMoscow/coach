@@ -32,5 +32,8 @@ use yii\helpers\Url;
                 return Html::a($coach->telegram_name, ['coaches/update', 'id' => $coach->id]);
             },
         ],
+        'formatname',
+        'city.name',
+        'sport.name',
     ],
 ])?>
