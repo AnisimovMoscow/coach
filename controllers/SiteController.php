@@ -196,6 +196,24 @@ class SiteController extends Controller
 
     private function start($user)
     {
+        $student = Student::findOne(['telegram_id' => $user['id']]);
+        if ($student !== null) {
+            $coach = $student->getCoach();
+            if ($coach !== null) {
+                $info = $this->getCoachInfo($coach);
+                $this->send($user['id'], "Ваш тренер:\n\n{$info}");
+            } else {
+                $this->send($user['id'], 'Не смогли подобрать тренера для вас');
+            }
+            return;
+        }
+
+        $coach = Coach::findOne(['telegram_id' => $user['id']]);
+        if ($coach !== null) {
+            $this->send($user['id'], 'Мы пришлём вам контакты спортсменов');
+            return;
+        }
+
         $keyboard = new InlineKeyboardMarkup([
             [
                 [
@@ -231,26 +249,8 @@ class SiteController extends Controller
             return;
         }
 
-        $message = "Ваш тренер:\n\n{$coach->name}\n";
-
-        $sex = Coach::SEXES[$coach->sex] ?? 'Не указан пол';
-        $age = array_key_exists($coach->age, Coach::AGES) ? Coach::AGES[$coach->age] . ' лет' : 'Не указан возраст';
-        $message .= "{$sex}, {$age}\n\n";
-
-        $format = array_key_exists($coach->format, Coach::FORMATS) ? 'Форматы тренировок: ' . Coach::FORMATS[$coach->format] : 'Не указаны форматы тренировок';
-        $message .= "{$format}\n";
-
-        $city = ($coach->city !== null) ? 'Город: ' . $coach->city->name : 'Не указан город';
-        $message .= "{$city}\n\n";
-
-        $message .= "Контакты:\n{$coach->contact}\n\n";
-        if (!empty($coach->telegram_username)) {
-            $message .= "Телеграм: https://t.me/{$coach->telegram_username}\n\n";
-        }
-
-        $message .= "О себе:\n{$coach->about}";
-
-        $this->send($user['id'], $message);
+        $info = $this->getCoachInfo($coach);
+        $this->send($user['id'], "Ваш тренер:\n\n{$info}");
     }
 
     private function createStudent($user)
@@ -459,26 +459,8 @@ class SiteController extends Controller
         if ($coach === null) {
             $this->send($user['id'], 'Мы не смогли найти тренера по вашему запросу');
         } else {
-            $message = "Мы нашли вам тренера:\n\n{$coach->name}\n";
-
-            $sex = Coach::SEXES[$coach->sex] ?? 'Не указан пол';
-            $age = array_key_exists($coach->age, Coach::AGES) ? Coach::AGES[$coach->age] . ' лет' : 'Не указан возраст';
-            $message .= "{$sex}, {$age}\n\n";
-
-            $format = array_key_exists($coach->format, Coach::FORMATS) ? 'Форматы тренировок: ' . Coach::FORMATS[$coach->format] : 'Не указаны форматы тренировок';
-            $message .= "{$format}\n";
-
-            $city = ($coach->city !== null) ? 'Город: ' . $coach->city->name : 'Не указан город';
-            $message .= "{$city}\n\n";
-
-            $message .= "Контакты:\n{$coach->contact}\n\n";
-            if (!empty($coach->telegram_username)) {
-                $message .= "Телеграм: https://t.me/{$coach->telegram_username}\n\n";
-            }
-
-            $message .= "О себе:\n{$coach->about}";
-
-            $this->send($user['id'], $message);
+            $info = $this->getCoachInfo($coach);
+            $this->send($user['id'], "Мы нашли вам тренера:\n\n{$info}");
         }
     }
 
@@ -700,6 +682,30 @@ class SiteController extends Controller
     private function welcomeCoach($user)
     {
         $this->send($user['id'], 'Мы пришлём вам контакты спортсменов');
+    }
+
+    private function getCoachInfo($coach)
+    {
+        $info = "{$coach->name}\n";
+
+        $sex = Coach::SEXES[$coach->sex] ?? 'Не указан пол';
+        $age = array_key_exists($coach->age, Coach::AGES) ? Coach::AGES[$coach->age] . ' лет' : 'Не указан возраст';
+        $info .= "{$sex}, {$age}\n\n";
+
+        $format = array_key_exists($coach->format, Coach::FORMATS) ? 'Форматы тренировок: ' . Coach::FORMATS[$coach->format] : 'Не указаны форматы тренировок';
+        $info .= "{$format}\n";
+
+        $city = ($coach->city !== null) ? 'Город: ' . $coach->city->name : 'Не указан город';
+        $info .= "{$city}\n\n";
+
+        $info .= "Контакты:\n{$coach->contact}\n\n";
+        if (!empty($coach->telegram_username)) {
+            $info .= "Телеграм: https://t.me/{$coach->telegram_username}\n\n";
+        }
+
+        $info .= "О себе:\n{$coach->about}";
+
+        return $info;
     }
 
     private function getAgeKeyboard($type, $ages)
