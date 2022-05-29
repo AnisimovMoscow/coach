@@ -209,7 +209,7 @@ class SiteController extends Controller
 
                 case self::ACTION_CHANGE_FORMAT:
                     if ($data['type'] == self::TYPE_STUDENT) {
-                        $ok = $this->changeStudentFormat($user, $data['format']);
+                        $ok = $this->setStudentFormat($user, $data['format']);
                         if ($ok) {
                             $this->findCoach($user);
                         }
