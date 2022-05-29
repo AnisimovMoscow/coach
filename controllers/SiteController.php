@@ -102,7 +102,7 @@ class SiteController extends Controller
                             $this->requestStudentFormat($chat, self::ACTION_FORMAT);
                             break;
                     }
-                    
+
                 } else {
                     $coach = Coach::findOne(['telegram_id' => $chat['id']]);
                     if ($coach !== null) {
@@ -239,7 +239,7 @@ class SiteController extends Controller
 
         $coach = Coach::findOne(['telegram_id' => $user['id']]);
         if ($coach !== null) {
-            $this->send($user['id'], 'Мы пришлём вам контакты спортсменов');
+            $this->send($user['id'], 'Мы постараемся как можно скорее верифицировать вашу квалификацию - после этого спортсмены смогут получать ваши контакты.');
             return;
         }
 
@@ -491,7 +491,9 @@ class SiteController extends Controller
                     ],
                 ],
             ]);
-            $this->send($user['id'], 'Увы, сейчас мы не смогли найти вам подходящего тренера. Но новые тренеры появляются в базе каждый день – если кто-то из них совпадет с вашими пожеланиями, мы дадим ему ваш контакт.', $keyboard);
+            $message = "Увы, сейчас мы не смогли найти вам подходящего тренера. Попробуйте изменить желаемый формат тренировок, чтобы получить доступ к большему числу тренеров.\n\n";
+            $message .= "В любом случае, новые тренеры появляются в базе каждый день – попробуйте снова воспользоваться ботом позже.";
+            $this->send($user['id'], $message, $keyboard);
         } else {
             $info = $this->getCoachInfo($coach);
             $this->send($user['id'], "Ура! Мы нашли вам тренера:\n\n{$info}");
@@ -502,7 +504,7 @@ class SiteController extends Controller
     {
         $coach = Coach::findOne(['telegram_id' => $user['id']]);
         if ($coach !== null) {
-            $this->send($user['id'], 'Мы пришлём вам контакты спортсменов');
+            $this->send($user['id'], 'Мы постараемся как можно скорее верифицировать вашу квалификацию - после этого спортсмены смогут получать ваши контакты.');
             return false;
         }
 
