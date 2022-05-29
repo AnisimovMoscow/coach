@@ -10,12 +10,11 @@ class Coach extends ActiveRecord
     const RESPONSE_NONE = 0;
     const RESPONSE_NAME = 1;
     const RESPONSE_AGE = 2;
-    const RESPONSE_SEX = 3;
-    const RESPONSE_CONTACT = 4;
-    const RESPONSE_FORMAT = 5;
-    const RESPONSE_CITY = 6;
-    const RESPONSE_SPORT = 7;
-    const RESPONSE_ABOUT = 8;
+    const RESPONSE_CONTACT = 3;
+    const RESPONSE_FORMAT = 4;
+    const RESPONSE_CITY = 5;
+    const RESPONSE_SPORT = 6;
+    const RESPONSE_ABOUT = 7;
 
     const FORMAT_ONLINE = 1;
     const FORMAT_OFFLINE = 2;
@@ -33,12 +32,6 @@ class Coach extends ActiveRecord
         9 => 'Не скажу',
     ];
 
-    const SEXES = [
-        1 => 'Мужчина',
-        2 => 'Женщина',
-        3 => 'Не скажу',
-    ];
-
     const FORMATS = [
         self::FORMAT_ONLINE => 'Онлайн',
         self::FORMAT_OFFLINE => 'Оффлайн',
@@ -51,7 +44,6 @@ class Coach extends ActiveRecord
             'id' => 'ID',
             'name' => 'Имя',
             'age' => 'Возраст',
-            'sex' => 'Пол',
             'contact' => 'Контакт',
             'format' => 'Формат тренировок',
             'city_id' => 'Город',
@@ -67,7 +59,7 @@ class Coach extends ActiveRecord
     public function rules()
     {
         return [
-            [['name', 'age', 'sex', 'contact', 'format', 'city_id', 'sport_id', 'about', 'telegram_id', 'telegram_name', 'telegram_username'], 'safe'],
+            [['name', 'age', 'contact', 'format', 'city_id', 'sport_id', 'about', 'telegram_id', 'telegram_name', 'telegram_username'], 'safe'],
         ];
     }
 

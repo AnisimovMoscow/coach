@@ -23,11 +23,10 @@ class SiteController extends Controller
 
     const ACTION_TYPE = 1;
     const ACTION_AGE = 2;
-    const ACTION_SEX = 3;
-    const ACTION_FORMAT = 4;
-    const ACTION_CITY = 5;
-    const ACTION_SPORT = 6;
-    const ACTION_ABOUT = 7;
+    const ACTION_FORMAT = 3;
+    const ACTION_CITY = 4;
+    const ACTION_SPORT = 5;
+    const ACTION_ABOUT = 6;
 
     public function behaviors()
     {
@@ -139,21 +138,10 @@ class SiteController extends Controller
                 case self::ACTION_AGE:
                     if ($data['type'] == self::TYPE_STUDENT) {
                         $this->setStudentAge($user, $data['age']);
-                        $this->requestStudentSex($user);
-
-                    } elseif ($data['type'] == self::TYPE_COACH) {
-                        $this->setCoachAge($user, $data['age']);
-                        $this->requestCoachSex($user);
-                    }
-                    break;
-
-                case self::ACTION_SEX:
-                    if ($data['type'] == self::TYPE_STUDENT) {
-                        $this->setStudentSex($user, $data['sex']);
                         $this->requestStudentContact($user);
 
                     } elseif ($data['type'] == self::TYPE_COACH) {
-                        $this->setCoachSex($user, $data['sex']);
+                        $this->setCoachAge($user, $data['age']);
                         $this->requestCoachContact($user);
                     }
                     break;
@@ -308,35 +296,6 @@ class SiteController extends Controller
         }
 
         $student->age = $age;
-        $student->response_state = Student::RESPONSE_NONE;
-        $student->save();
-    }
-
-    private function requestStudentSex($user)
-    {
-        $student = Student::findOne(['telegram_id' => $user['id']]);
-        if ($student === null) {
-            return;
-        }
-
-        $keyboard = $this->getSexKeyboard(self::TYPE_STUDENT, Student::SEXES);
-        $this->send($student->telegram_id, 'Укажите ваш пол', $keyboard);
-
-        $student->response_state = Student::RESPONSE_SEX;
-        $student->save();
-    }
-
-    private function setStudentSex($user, $sex)
-    {
-        $student = Student::findOne(['telegram_id' => $user['id']]);
-        if ($student === null) {
-            return;
-        }
-        if ($student->response_state != Student::RESPONSE_SEX) {
-            return;
-        }
-
-        $student->sex = $sex;
         $student->response_state = Student::RESPONSE_NONE;
         $student->save();
     }
@@ -523,34 +482,6 @@ class SiteController extends Controller
         $coach->save();
     }
 
-    private function requestCoachSex($user)
-    {
-        $coach = Coach::findOne(['telegram_id' => $user['id']]);
-        if ($coach === null) {
-            return;
-        }
-
-        $keyboard = $this->getSexKeyboard(self::TYPE_COACH, Coach::SEXES);
-        $this->send($coach->telegram_id, 'Укажите ваш пол', $keyboard);
-
-        $coach->response_state = Coach::RESPONSE_SEX;
-        $coach->save();
-    }
-
-    private function setCoachSex($user, $sex)
-    {
-        $coach = Coach::findOne(['telegram_id' => $user['id']]);
-        if ($coach === null) {
-            return;
-        }
-        if ($coach->response_state != Coach::RESPONSE_SEX) {
-            return;
-        }
-
-        $coach->sex = $sex;
-        $coach->response_state = Coach::RESPONSE_NONE;
-        $coach->save();
-    }
 
     private function requestCoachContact($user)
     {
@@ -688,9 +619,8 @@ class SiteController extends Controller
     {
         $info = "{$coach->name}\n";
 
-        $sex = Coach::SEXES[$coach->sex] ?? 'Не указан пол';
         $age = array_key_exists($coach->age, Coach::AGES) ? Coach::AGES[$coach->age] . ' лет' : 'Не указан возраст';
-        $info .= "{$sex}, {$age}\n\n";
+        $info .= "{$age}\n\n";
 
         $format = array_key_exists($coach->format, Coach::FORMATS) ? 'Форматы тренировок: ' . Coach::FORMATS[$coach->format] : 'Не указаны форматы тренировок';
         $info .= "{$format}\n";
@@ -729,23 +659,6 @@ class SiteController extends Controller
         }
 
         return new InlineKeyboardMarkup($buttons);
-    }
-
-    private function getSexKeyboard($type, $sexes)
-    {
-        $row = [];
-        foreach ($sexes as $id => $name) {
-            $row[] = [
-                'text' => $name,
-                'callback_data' => http_build_query([
-                    'action' => self::ACTION_SEX,
-                    'type' => $type,
-                    'sex' => $id,
-                ]),
-            ];
-        }
-
-        return new InlineKeyboardMarkup([$row]);
     }
 
     private function getFormatKeyboard($type)
