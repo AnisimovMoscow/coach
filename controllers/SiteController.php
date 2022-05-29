@@ -81,10 +81,13 @@ class SiteController extends Controller
             if (!array_key_exists('text', $message)) {
                 return;
             }
+
             if ($message['text'] == self::COMMAND_START) {
                 $this->start($chat);
+
             } elseif ($message['text'] == self::COMMAND_COACH) {
                 $this->coach($chat);
+
             } else {
                 $student = Student::findOne(['telegram_id' => $chat['id']]);
                 if ($student !== null) {
@@ -99,6 +102,7 @@ class SiteController extends Controller
                             $this->requestStudentFormat($chat, self::ACTION_FORMAT);
                             break;
                     }
+                    
                 } else {
                     $coach = Coach::findOne(['telegram_id' => $chat['id']]);
                     if ($coach !== null) {
@@ -257,7 +261,13 @@ class SiteController extends Controller
                 ],
             ],
         ]);
-        $this->send($user['id'], 'Подберу вам тренера для занятий или найду спорстмена для тренировки. Вы спортсмен или тренер?', $keyboard);
+        $message = "Я бот Edzo, который поможет тебе найти не тренеришку, а хорошего тренера!\n\n";
+        $message .= "Сейчас я попрошу тебя ответить на несколько вопросов про нужный вид спорта, формат тренировок, город и другие детали, которые помогут связать тебя с тем тренером, который подходит именно тебе. А если ты тренер, то аналогичные вопросы помогут нам найти для тебя подходящих учеников.\n\n";
+        $message .= "Мы не будем никуда выкладывать данные, которые попросим. Они будут использоваться только для сравнения твоих пожеланий с условиями разных тренеров.\n\n";
+        $message .= "После заполнения анкеты мы дадим тебе контакт тренера, который подходит тебе лучше всего.\n\n";
+        $message .= "Вперед!\n\n";
+        $message .= "Ты тренер или спортсмен?";
+        $this->send($user['id'], $message, $keyboard);
     }
 
     private function coach($user)
@@ -304,7 +314,7 @@ class SiteController extends Controller
             return;
         }
 
-        $this->send($user['id'], 'Отправьте ваше имя. Оно будет отображаться тренеру');
+        $this->send($user['id'], 'Напишите ваше имя. Оно будет отображаться тренеру, которого подберет вам бот.');
 
         $student->response_state = Student::RESPONSE_NAME;
         $student->save();
@@ -355,7 +365,7 @@ class SiteController extends Controller
             return;
         }
 
-        $this->send($user['id'], 'Отправьте контакты для связи (телефон или почта). Они будут отображаться вашему тренеру');
+        $this->send($user['id'], 'Напишите контакты для связи  (телефон, почта, телеграм или другое). Они будут показаны вашему тренеру.');
 
         $student->response_state = Student::RESPONSE_CONTACT;
         $student->save();
@@ -376,7 +386,7 @@ class SiteController extends Controller
         }
 
         $keyboard = $this->getFormatKeyboard(self::TYPE_STUDENT, $action);
-        $this->send($student->telegram_id, 'Выберите желаемый формат тренировок', $keyboard);
+        $this->send($student->telegram_id, 'Как вы хотите работать с тренером: офлайн или онлайн?', $keyboard);
 
         $student->response_state = Student::RESPONSE_FORMAT;
         $student->save();
@@ -407,7 +417,7 @@ class SiteController extends Controller
         }
 
         $keyboard = $this->getCityKeyboard(self::TYPE_STUDENT, $student->format);
-        $this->send($student->telegram_id, 'Выберите ваш город', $keyboard);
+        $this->send($student->telegram_id, 'Укажите ваш город', $keyboard);
 
         $student->response_state = Student::RESPONSE_CITY;
         $student->save();
@@ -481,10 +491,10 @@ class SiteController extends Controller
                     ],
                 ],
             ]);
-            $this->send($user['id'], 'Мы не смогли найти тренера по вашему запросу, но вы можете поменять желаемый формат тренировок и возможно получится подобрать тренера', $keyboard);
+            $this->send($user['id'], 'Увы, сейчас мы не смогли найти вам подходящего тренера. Но новые тренеры появляются в базе каждый день – если кто-то из них совпадет с вашими пожеланиями, мы дадим ему ваш контакт.', $keyboard);
         } else {
             $info = $this->getCoachInfo($coach);
-            $this->send($user['id'], "Мы нашли вам тренера:\n\n{$info}");
+            $this->send($user['id'], "Ура! Мы нашли вам тренера:\n\n{$info}");
         }
     }
 
@@ -514,7 +524,7 @@ class SiteController extends Controller
             return;
         }
 
-        $this->send($user['id'], 'Отправьте ваше имя. Оно будет отображаться спортсменам');
+        $this->send($user['id'], 'Напишите ваше имя. Оно будет отображаться спортсменам.');
 
         $coach->response_state = Coach::RESPONSE_NAME;
         $coach->save();
@@ -565,7 +575,7 @@ class SiteController extends Controller
             return;
         }
 
-        $this->send($user['id'], 'Отправьте контакты для связи (телефон или почта). Они будут отображаться спортсменам');
+        $this->send($user['id'], 'Напишите контакты для связи (телефон, почта, телеграм или другое). Они будут показаны спортсменам, с которыми мы вас смэтчим.');
 
         $coach->response_state = Coach::RESPONSE_CONTACT;
         $coach->save();
@@ -586,7 +596,7 @@ class SiteController extends Controller
         }
 
         $keyboard = $this->getFormatKeyboard(self::TYPE_COACH, self::ACTION_FORMAT);
-        $this->send($coach->telegram_id, 'Выберите желаемый формат тренировок', $keyboard);
+        $this->send($coach->telegram_id, 'В каком формате вы готовы тренировать?', $keyboard);
 
         $coach->response_state = Coach::RESPONSE_FORMAT;
         $coach->save();
@@ -648,7 +658,7 @@ class SiteController extends Controller
         }
 
         $keyboard = $this->getSportKeyboard(self::TYPE_COACH);
-        $this->send($coach->telegram_id, 'Выберите вид спорта, которым вы занимаетесь', $keyboard);
+        $this->send($coach->telegram_id, 'Выберите вид спорта для тренировок:', $keyboard);
 
         $coach->response_state = Coach::RESPONSE_SPORT;
         $coach->save();
@@ -678,7 +688,7 @@ class SiteController extends Controller
             return;
         }
 
-        $this->send($user['id'], 'Расскажите немного о себе. Ваша квалификация, опыт');
+        $this->send($user['id'], 'Расскажите немного о себе. Укажите вашу квалификацию, опыт, достижения. Все, что вы напишете, будет показано спортсменам, с которыми мы вас смэтчим.');
 
         $coach->response_state = Coach::RESPONSE_ABOUT;
         $coach->save();
@@ -693,7 +703,7 @@ class SiteController extends Controller
 
     private function welcomeCoach($user)
     {
-        $this->send($user['id'], 'Мы пришлём вам контакты спортсменов');
+        $this->send($user['id'], 'Спасибо! Мы постараемся как можно скорее верифицировать вашу квалификацию - после этого спортсмены смогут получать ваши контакты.');
     }
 
     private function getCoachInfo($coach)
