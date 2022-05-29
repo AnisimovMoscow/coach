@@ -36,4 +36,7 @@ use yii\helpers\Url;
         'city.name',
         'sport.name',
     ],
+    'pager' => [
+        'class' => 'yii\bootstrap5\LinkPager',
+    ],
 ])?>

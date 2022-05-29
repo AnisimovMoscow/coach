@@ -33,4 +33,7 @@ use yii\helpers\Url;
             },
         ],
     ],
+    'pager' => [
+        'class' => 'yii\bootstrap5\LinkPager',
+    ],
 ])?>
