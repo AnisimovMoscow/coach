@@ -494,6 +494,11 @@ class SiteController extends Controller
 
     private function requestCoachName($user, $coach)
     {
+        $coach = Coach::findOne(['telegram_id' => $user['id']]);
+        if ($coach === null) {
+            return;
+        }
+
         $this->send($user['id'], 'Отправьте ваше имя. Оно будет отображаться спортсменам');
 
         $coach->response_state = Coach::RESPONSE_NAME;
