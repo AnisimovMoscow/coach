@@ -128,6 +128,7 @@ class Coach extends ActiveRecord
         $coach = Coach::findOne($ids[$key]);
 
         if ($coach !== null) {
+            Yii::$app->db->createCommand()->delete('coach_student', ['student_id' => $student->id])->execute();
             Yii::$app->db->createCommand()->insert('coach_student', [
                 'coach_id' => $coach->id,
                 'student_id' => $student->id,
