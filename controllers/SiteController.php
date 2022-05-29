@@ -265,6 +265,11 @@ class SiteController extends Controller
 
     private function requestStudentName($user, $student)
     {
+        $student = Student::findOne(['telegram_id' => $user['id']]);
+        if ($student === null) {
+            return;
+        }
+
         $this->send($user['id'], 'Отправьте ваше имя. Оно будет отображаться тренеру');
 
         $student->response_state = Student::RESPONSE_NAME;
