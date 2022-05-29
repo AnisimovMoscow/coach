@@ -80,7 +80,5 @@ class Student extends ActiveRecord
             'response_state' => self::RESPONSE_NONE,
         ]);
         $student->save();
-
-        return $student;
     }
 }

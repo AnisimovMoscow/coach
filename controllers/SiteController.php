@@ -126,12 +126,16 @@ class SiteController extends Controller
             switch ($data['action']) {
                 case self::ACTION_TYPE:
                     if ($data['type'] == self::TYPE_STUDENT) {
-                        $student = $this->createStudent($user);
-                        $this->requestStudentName($user, $student);
+                        $ok = $this->createStudent($user);
+                        if ($ok) {
+                            $this->requestStudentName($user);
+                        }
 
                     } elseif ($data['type'] == self::TYPE_COACH) {
-                        $coach = $this->createCoach($user);
-                        $this->requestCoachName($user, $coach);
+                        $ok = $this->createCoach($user);
+                        if ($ok) {
+                            $this->requestCoachName($user);
+                        }
                     }
                     break;
 
@@ -245,13 +249,22 @@ class SiteController extends Controller
     {
         $student = Student::findOne(['telegram_id' => $user['id']]);
         if ($student !== null) {
-            return;
+            $this->send($user['id'], 'Если вы хотите посмотреть своего тренера, нажмите /coach');
+            return false;
         }
 
-        return Student::add($user);
+        $coach = Coach::findOne(['telegram_id' => $user['id']]);
+        if ($coach !== null) {
+            $this->send($user['id'], 'Вы уже зарегистрированы как тренер');
+            return false;
+        }
+
+        Student::add($user);
+
+        return true;
     }
 
-    private function requestStudentName($user, $student)
+    private function requestStudentName($user)
     {
         $student = Student::findOne(['telegram_id' => $user['id']]);
         if ($student === null) {
@@ -427,13 +440,22 @@ class SiteController extends Controller
     {
         $coach = Coach::findOne(['telegram_id' => $user['id']]);
         if ($coach !== null) {
-            return;
+            $this->send($user['id'], 'Мы пришлём вам контакты спортсменов');
+            return false;
         }
 
-        return Coach::add($user);
+        $student = Student::findOne(['telegram_id' => $user['id']]);
+        if ($student !== null) {
+            $this->send($user['id'], 'Вы уже зарегистрированы как спортсмен');
+            return false;
+        }
+
+        Coach::add($user);
+
+        return true;
     }
 
-    private function requestCoachName($user, $coach)
+    private function requestCoachName($user)
     {
         $coach = Coach::findOne(['telegram_id' => $user['id']]);
         if ($coach === null) {
@@ -481,7 +503,6 @@ class SiteController extends Controller
         $coach->response_state = Coach::RESPONSE_NONE;
         $coach->save();
     }
-
 
     private function requestCoachContact($user)
     {
