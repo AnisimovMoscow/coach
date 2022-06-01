@@ -31,7 +31,6 @@ use yii\helpers\Url;
 
     <div class="container row">
         <div class="col-3">
-            <?php /*
             <?=Nav::widget([
                 'items' => [
                     ['label' => 'Тренеры', 'url' => ['coaches/index']],
@@ -41,13 +40,12 @@ use yii\helpers\Url;
                 ],
                 'options' => ['class' => 'flex-column'],
             ])?>
-            */ ?>
         </div>
         <div class="col-9">
-            <h1>Сайт закрыт</h1>
             <?php /*
-            <?=$content?>
+            <h1>Сайт закрыт</h1>
             */ ?>
+            <?=$content?>
         </div>
     </div>
 
