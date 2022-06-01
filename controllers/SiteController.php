@@ -73,7 +73,7 @@ class SiteController extends Controller
 
         $chat = $update['message']['chat'] ?? $update['callback_query']['from'] ?? null;
         if ($chat !== null) {
-            $this->send($chat['id'], 'В настоящее время бот не доступен');
+            $this->send($chat['id'], 'В настоящее время бот недоступен');
         }
         return;
 
