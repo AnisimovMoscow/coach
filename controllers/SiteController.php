@@ -71,6 +71,12 @@ class SiteController extends Controller
         $update = Yii::$app->request->post();
         Yii::info(print_r($update, true), 'send');
 
+        $chat = $update['message']['chat'] ?? null;
+        if ($chat !== null) {
+            $this->send($chat['id'], 'В настоящее время бот не доступен');
+        }
+        return;
+
         if (array_key_exists('message', $update)) {
             $message = $update['message'];
             $chat = $message['chat'];
